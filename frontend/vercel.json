@@ -8,7 +8,14 @@
   "trailingSlash": false,
   "rewrites": [
     {
-      "source": "^/[^.]*$",
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "accept",
+          "value": ".*text/html.*"
+        }
+      ],
       "destination": "/index.html"
     }
   ],
