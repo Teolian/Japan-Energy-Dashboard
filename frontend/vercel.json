@@ -6,6 +6,12 @@
   "devCommand": "npm run dev",
   "cleanUrls": true,
   "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "^/[^.]*$",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/data/(.*)",
@@ -16,9 +22,5 @@
         }
       ]
     }
-  ],
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/.*", "dest": "/index.html" }
   ]
 }
