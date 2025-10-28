@@ -1,9 +1,8 @@
 # Japan Energy Dashboard
 
 Real-time electricity market monitoring for Japan. A pet project exploring energy data visualization and analytics.
-LIVE-DEMO:  [](https://japan-energy-dashboard.vercel.app/)
-
-## What it does
+LIVE-DEMO:  [
+](https://japan-energy-dashboard.vercel.app/)## What it does
 
 Dashboard for tracking electricity demand, spot prices, and system reserves across major Japanese power regions (Tokyo/TEPCO and Kansai).
 
