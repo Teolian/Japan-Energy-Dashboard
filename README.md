@@ -121,6 +121,8 @@ npm run dev
 
 Now you can switch to LIVE mode and refresh data from real sources.
 
+> **Note:** the public Vercel deployment is static-only. The “Refresh” button and live data mode require the Go backend to be running locally (or on your own server) and won’t function on the hosted demo.
+
 ## Building
 
 ```bash
