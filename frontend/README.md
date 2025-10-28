@@ -90,6 +90,7 @@ frontend/
 - Click "Refresh" button to fetch latest data
 - Data cached to `public/data/jp/` after successful fetch
 - Supports manual data refresh with progress tracking
+- **Note:** the hosted Vercel deployment is static-only; to use the refresh workflow you must run the Go backend locally alongside `npm run dev`.
 
 ## State Management
 
