@@ -1,7 +1,7 @@
 # Project Roadmap — Japan Energy Dashboard
 
 **Branch:** `feat/japan-dashboard` (main development branch)
-**GitHub:** https://github.com/Teolian/corporate-energy-platform
+**GitHub:** https://github.com/Teolian/Japan-Energy-Dashboard
 **Live Demo:** [Preview URL from feat/japan-dashboard deployment]
 
 ---

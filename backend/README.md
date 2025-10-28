@@ -34,7 +34,7 @@ C. Data Visualization (3-4 часа):
 Work happens in `feat/japan-dashboard` branch.
 Feature branches: create from `feat/japan-dashboard`, merge back via PR.
 
-**Repository:** https://github.com/Teolian/corporate-energy-platform
+**Repository:** https://github.com/Teolian/Japan-Energy-Dashboard
 
 ## Project Structure
 

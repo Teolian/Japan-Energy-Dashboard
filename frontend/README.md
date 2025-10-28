@@ -5,17 +5,10 @@ Vue 3 + TypeScript dashboard for monitoring Japanese electricity market data.
 ## Quick Start
 
 ```bash
-# Install dependencies
 npm install
-
-# Start development server (port 5173)
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
+npm run dev        # Start dev server (port 5173)
+npm run build      # Build for production
+npm run preview    # Preview production build
 ```
 
 ## Features
@@ -46,87 +39,40 @@ npm run preview
 
 ## Technology Stack
 
-- **Vue 3.5** - Progressive JavaScript framework with Composition API
-- **TypeScript 5.6** - Strict type safety throughout the application
-- **Pinia 2.2** - State management for demand, JEPX, and reserve data
-- **TailwindCSS 3.4** - Utility-first CSS framework
-- **Chart.js 4.4** - Interactive data visualizations
-- **Vite 5.4** - Build tool with HMR and optimized production builds
-- **Lucide Icons** - Modern SVG icon library
+- Vue 3.5 - Composition API with `<script setup>`
+- TypeScript 5.6 - Full type safety
+- Pinia 2.2 - State management
+- TailwindCSS 3.4 - Utility-first CSS
+- Chart.js 4.4 - Interactive visualizations
+- Vite 5.4 - Build tool with HMR
+- Lucide Icons - Modern SVG icons
 
 ## Project Structure
 
 ```
-frontend-japan/
+frontend/
 ├── src/
 │   ├── components/
-│   │   ├── common/
-│   │   │   ├── BaseButton.vue         # Reusable button component
-│   │   │   ├── DataModeToggle.vue     # Mock/Live mode switcher
-│   │   │   ├── RefreshButton.vue      # Data refresh trigger
-│   │   │   └── RefreshSidebar.vue     # Slide-in progress panel
-│   │   ├── demand/
-│   │   │   └── DemandChart.vue        # Demand visualization component
-│   │   ├── reserve/
-│   │   │   └── ReserveTable.vue       # Reserve capacity table
-│   │   └── comparison/
-│   │       └── ComparisonAnalytics.vue # Regional comparison
-│   ├── views/
-│   │   └── Dashboard.vue              # Main dashboard page
+│   │   ├── common/            # Reusable UI components
+│   │   ├── demand/            # Demand visualization
+│   │   ├── reserve/           # Reserve capacity display
+│   │   └── comparison/        # Regional comparison
 │   ├── stores/
-│   │   ├── demand.ts                  # Demand data state (Tokyo/Kansai)
-│   │   ├── jepx.ts                    # JEPX spot price state
-│   │   └── reserve.ts                 # Reserve capacity state
+│   │   ├── demand.ts          # Demand data state
+│   │   ├── jepx.ts            # JEPX spot price state
+│   │   └── reserve.ts         # Reserve capacity state
 │   ├── services/
-│   │   ├── dataClient.ts              # Data fetching with mode switching
-│   │   └── weatherClient.ts           # Weather data integration
-│   ├── types/
-│   │   ├── demand.ts                  # Demand data TypeScript interfaces
-│   │   ├── jepx.ts                    # JEPX data interfaces
-│   │   └── reserve.ts                 # Reserve data interfaces
-│   ├── App.vue                        # Root component
-│   ├── main.ts                        # Application entry point
-│   └── router.ts                      # Vue Router configuration
-├── public/
-│   └── data/jp/                       # Mock data (static JSON files)
-│       ├── tokyo/                     # TEPCO demand files
-│       ├── kansai/                    # Kansai demand files
-│       ├── jepx/                      # JEPX spot price files
-│       └── system/                    # OCCTO reserve files
-├── index.html                         # HTML entry point
-├── vite.config.ts                     # Vite build configuration
-├── tailwind.config.js                 # TailwindCSS configuration
-├── tsconfig.json                      # TypeScript compiler options
-├── vercel.json                        # Vercel deployment settings
-└── package.json                       # Project dependencies
-```
-
-## Configuration
-
-### Vite Configuration
-
-```typescript
-// vite.config.ts
-export default defineConfig({
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',  // Backend API
-        changeOrigin: true,
-      },
-    },
-  },
-})
-```
-
-### Environment Variables
-
-Create `.env.local` for custom configuration:
-
-```bash
-# Backend API URL (optional, defaults to localhost:8080)
-VITE_API_BASE_URL=http://localhost:8080
+│   │   ├── dataClient.ts      # Data fetching with mode switching
+│   │   └── weatherClient.ts   # Weather data integration
+│   ├── types/                 # TypeScript interfaces
+│   └── views/
+│       └── Dashboard.vue      # Main dashboard page
+├── public/data/jp/            # Mock data (static JSON files)
+│   ├── tokyo/                 # TEPCO demand files
+│   ├── kansai/                # Kansai demand files
+│   ├── jepx/                  # JEPX spot price files
+│   └── system/                # OCCTO reserve files
+└── vercel.json                # Deployment configuration
 ```
 
 ## Data Modes
@@ -284,7 +230,20 @@ interface ReserveResponse {
 }
 ```
 
-## Development Guide
+## Build Output
+
+```
+dist/
+├── index.html                   0.46 KB
+├── assets/
+│   ├── index-[hash].css        31.38 KB (gzipped: 5.47 KB)
+│   └── index-[hash].js        347.94 KB (gzipped: 118.33 KB)
+└── data/jp/                    30 JSON files (~500 KB)
+
+Total transferred: ~600 KB
+```
+
+## Development
 
 ### Adding New Components
 
@@ -336,110 +295,33 @@ export const useExampleStore = defineStore('example', () => {
 })
 ```
 
-## Deployment
+## Configuration
 
-### Vercel Deployment
+### Vite Configuration
 
-**Step 1: Install Vercel CLI**
+```typescript
+// vite.config.ts
+export default defineConfig({
+  server: {
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',  // Backend API
+        changeOrigin: true,
+      },
+    },
+  },
+})
+```
+
+### Environment Variables
+
+Create `.env.local` for custom configuration:
+
 ```bash
-npm i -g vercel
+# Backend API URL (optional, defaults to localhost:8080)
+VITE_API_BASE_URL=http://localhost:8080
 ```
-
-**Step 2: Login to Vercel**
-```bash
-vercel login
-```
-
-**Step 3: Deploy from frontend-japan directory**
-```bash
-cd frontend-japan
-vercel
-```
-
-**Step 4: Production Deployment**
-```bash
-vercel --prod
-```
-
-### Vercel Configuration (vercel.json)
-
-```json
-{
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
-  "installCommand": "npm install",
-  "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/data/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600, must-revalidate"
-        }
-      ]
-    }
-  ]
-}
-```
-
-### GitHub + Vercel Integration
-
-1. Push to GitHub
-2. Go to vercel.com/new
-3. Import repository
-4. Configure settings:
-   - Root Directory: `frontend-japan`
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-   - Install Command: `npm install`
-5. Deploy
-
-### Post-Deployment Checklist
-
-- [ ] Verify Mock mode loads data correctly
-- [ ] Test date navigation (previous/next day)
-- [ ] Confirm Mock/Live toggle persists on page reload
-- [ ] Test responsive design on mobile devices
-- [ ] Verify all charts render without errors
-- [ ] Check browser console for errors
-- [ ] Test production build locally with `npm run preview`
-
-## Build Output
-
-```
-dist/
-├── index.html                   0.46 KB
-├── assets/
-│   ├── index-[hash].css        31.38 KB (gzipped: 5.47 KB)
-│   └── index-[hash].js        347.94 KB (gzipped: 118.33 KB)
-└── data/jp/                    30 JSON files (~500 KB)
-
-Total transferred: ~600 KB
-```
-
-## Performance Optimization
-
-**Lighthouse Scores (Production Build):**
-- Performance: 95+
-- Accessibility: 98+
-- Best Practices: 100
-- SEO: 100
-
-**Optimization Techniques:**
-- Tree-shaking with Vite
-- Code splitting for lazy-loaded routes
-- Gzip/Brotli compression (Vercel automatic)
-- CDN distribution (Vercel Edge Network)
-- Efficient Chart.js rendering with data sampling
 
 ## Troubleshooting
 
@@ -454,32 +336,6 @@ npm install
 rm -rf .vite node_modules/.vite
 ```
 
-### TypeScript Errors
-
-```bash
-# Run type check
-npm run type-check
-
-# Check for common issues
-npx vue-tsc --noEmit
-```
-
-### CORS Errors (Live Mode)
-
-Ensure backend allows CORS from localhost:5173:
-
-```go
-// backend/cmd/api/main.go
-import "github.com/gin-contrib/cors"
-
-router.Use(cors.New(cors.Config{
-    AllowOrigins:     []string{"http://localhost:5173"},
-    AllowMethods:     []string{"GET", "POST"},
-    AllowHeaders:     []string{"Content-Type"},
-    AllowCredentials: true,
-}))
-```
-
 ### Data Not Loading
 
 **Mock Mode:**
@@ -492,53 +348,6 @@ router.Use(cors.New(cors.Config{
 - Check backend logs for errors
 - Test API endpoint: `curl http://localhost:8080/api/data/refresh`
 
-## Testing
-
-### Type Safety
-```bash
-npm run type-check
-```
-
-### Build Verification
-```bash
-npm run build
-npm run preview
-# Open http://localhost:4173
-```
-
-### Manual Testing Checklist
-- [ ] Mock mode displays data
-- [ ] Live mode fetches from API
-- [ ] Toggle persists on reload
-- [ ] Date navigation works
-- [ ] Refresh button shows progress
-- [ ] Charts render correctly
-- [ ] Responsive on mobile
-
-## Resources
-
-- [Vue 3 Documentation](https://vuejs.org/)
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
-- [Pinia Documentation](https://pinia.vuejs.org/)
-- [TailwindCSS Documentation](https://tailwindcss.com/docs)
-- [Chart.js Documentation](https://www.chartjs.org/docs/)
-- [Vite Documentation](https://vitejs.dev/)
-- [Vercel Documentation](https://vercel.com/docs)
-
-## Contributing
-
-This is an educational project demonstrating modern Vue 3 development practices. Contributions are welcome for:
-- Performance improvements
-- Accessibility enhancements
-- New data visualizations
-- Bug fixes
-
 ## License
 
-MIT - See [LICENSE](../LICENSE) for details
-
----
-
-**Main Repository:** [README.md](../README.md)
-**Backend Documentation:** [backend/README.md](../backend/README.md)
-**Deployment Guide:** [DEPLOY.md](../DEPLOY.md)
+MIT

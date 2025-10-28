@@ -208,7 +208,7 @@ cd frontend-japan && npm run dev
 ### Simulate Date Range
 ```bash
 # Generate data for Oct 20-30 (11 days)
-cd /Users/teo/projeck/aversome
+cd backend
 ./scripts/generate-date-range.sh 2025-10-20 2025-10-30
 ```
 
