@@ -9,8 +9,10 @@ export const useDemandStore = defineStore('demand', () => {
   const kansaiData = ref<DemandResponse | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
-  // Use fixed date where we have data (2025-10-24)
-  const currentDate = ref('2025-10-24')
+
+  // Initialize date from localStorage or use default (2025-10-24)
+  const savedDate = localStorage.getItem('jp-energy-last-date')
+  const currentDate = ref(savedDate || '2025-10-24')
 
   // Previous day metrics for trend comparison
   const prevTokyoMetrics = ref<DemandMetrics | null>(null)
@@ -90,19 +92,25 @@ export const useDemandStore = defineStore('demand', () => {
 
   function setDate(date: string) {
     currentDate.value = date
+    // Save to localStorage to persist across mode switches
+    localStorage.setItem('jp-energy-last-date', date)
   }
 
   function nextDay() {
     const d = new Date(currentDate.value)
     d.setDate(d.getDate() + 1)
-    currentDate.value = formatDate(d)
+    const newDate = formatDate(d)
+    currentDate.value = newDate
+    localStorage.setItem('jp-energy-last-date', newDate)
     fetchAllDemandData()
   }
 
   function prevDay() {
     const d = new Date(currentDate.value)
     d.setDate(d.getDate() - 1)
-    currentDate.value = formatDate(d)
+    const newDate = formatDate(d)
+    currentDate.value = newDate
+    localStorage.setItem('jp-energy-last-date', newDate)
     fetchAllDemandData()
   }
 

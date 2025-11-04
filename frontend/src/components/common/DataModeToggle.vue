@@ -14,6 +14,12 @@ function setMode(mode: 'mock' | 'live') {
     return
   }
 
+  // Save current date before reload
+  const currentDate = demandStore.currentDate
+  if (currentDate) {
+    localStorage.setItem('jp-energy-last-date', currentDate)
+  }
+
   // Update localStorage with correct key
   localStorage.setItem(STORAGE_KEY, mode)
 
