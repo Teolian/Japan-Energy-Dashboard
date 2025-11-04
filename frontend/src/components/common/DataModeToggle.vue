@@ -8,11 +8,14 @@ const STORAGE_KEY = 'jp-energy-data-mode' // Same as dataClient.ts
 
 const isMock = computed(() => demandStore.dataMode === 'mock')
 
-function toggleMode() {
-  const newMode = isMock.value ? 'live' : 'mock'
+function setMode(mode: 'mock' | 'live') {
+  // Skip if already in this mode
+  if ((mode === 'mock' && isMock.value) || (mode === 'live' && !isMock.value)) {
+    return
+  }
 
   // Update localStorage with correct key
-  localStorage.setItem(STORAGE_KEY, newMode)
+  localStorage.setItem(STORAGE_KEY, mode)
 
   // Reload page to apply new mode
   window.location.reload()
@@ -20,27 +23,27 @@ function toggleMode() {
 </script>
 
 <template>
-  <div class="flex items-center gap-3">
-    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-      MOCK
-    </span>
-
-    <!-- Toggle Switch -->
+  <div class="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
+    <!-- MOCK Button -->
     <button
-      @click="toggleMode"
-      class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-      :class="isMock ? 'bg-gray-400' : 'bg-blue-600'"
-      role="switch"
-      :aria-checked="!isMock"
+      @click="setMode('mock')"
+      class="px-4 py-2 text-sm font-medium transition-colors"
+      :class="isMock
+        ? 'bg-gray-600 text-white'
+        : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'"
     >
-      <span
-        class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
-        :class="isMock ? 'translate-x-1' : 'translate-x-6'"
-      />
+      MOCK
     </button>
 
-    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+    <!-- LIVE Button -->
+    <button
+      @click="setMode('live')"
+      class="px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-600 transition-colors"
+      :class="!isMock
+        ? 'bg-blue-600 text-white'
+        : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'"
+    >
       LIVE
-    </span>
+    </button>
   </div>
 </template>
