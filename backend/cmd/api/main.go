@@ -152,7 +152,7 @@ func fetchDemand(area, date string) DataFetchResult {
 		"./fetch-demand",
 		"-area", area,
 		"-date", date,
-		"--use-http",
+		// "--use-http", // Disabled for now - using testdata until real sources are configured
 	)
 
 	output, err := cmd.CombinedOutput()
@@ -186,7 +186,7 @@ func fetchJEPX(area, date string) DataFetchResult {
 		"./fetch-jepx",
 		"-area", area,
 		"-date", date,
-		"--use-http",
+		// "--use-http", // Disabled for now - using testdata until real sources are configured
 	)
 
 	output, err := cmd.CombinedOutput()
