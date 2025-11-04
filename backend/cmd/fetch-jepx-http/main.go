@@ -11,6 +11,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/teo/aversome/backend/internal/adapters"
@@ -70,7 +71,9 @@ func main() {
 		parsedDate, _ := timeutil.ParseDate(date)
 		dateStr := parsedDate.Format("20060102") // YYYYMMDD
 
-		url := fmt.Sprintf("%s/market/excel/spot_%s.csv", cfg.JEPX.URL, dateStr)
+		// JEPX URL already has trailing slash, don't add another one
+		baseURL := strings.TrimRight(cfg.JEPX.URL, "/")
+		url := fmt.Sprintf("%s/market/excel/spot_%s.csv", baseURL, dateStr)
 		sourceName = cfg.JEPX.Name
 
 		lgr.Info(fmt.Sprintf("Attempting HTTP fetch from %s", url))
