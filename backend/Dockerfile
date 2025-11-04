@@ -1,7 +1,7 @@
 # Multi-stage build for Japan Energy Dashboard API
 
 # Stage 1: Build
-FROM golang:1.24-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata
@@ -13,6 +13,10 @@ ENV GOTOOLCHAIN=local
 
 # Copy all source code first (needed for go mod tidy)
 COPY . .
+
+# Force Go 1.23 in go.mod (remove toolchain directive)
+RUN sed -i '/^toolchain/d' go.mod && \
+    sed -i 's/^go 1\.24.*/go 1.23/' go.mod
 
 # Sync dependencies
 RUN go mod tidy
