@@ -67,9 +67,10 @@ function generateMockData(area: Area, date: string): DemandResponse {
   }
 }
 
-// Fetch live data from static JSON files
+// Fetch live data from API endpoint
 async function fetchLiveData(area: Area, date: string): Promise<DemandResponse> {
-  const response = await fetch(`/data/jp/${area}/demand-${date}.json`)
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+  const response = await fetch(`${apiBaseUrl}/api/demand/${area}/${date}`)
 
   if (!response.ok) {
     throw new Error(`Failed to fetch ${area} demand for ${date}: ${response.statusText}`)
@@ -153,7 +154,8 @@ function generateMockReserveData(date: string): ReserveResponse {
 
 // Fetch live reserve margin data
 async function fetchLiveReserveData(date: string): Promise<ReserveResponse> {
-  const response = await fetch(`/data/jp/system/reserve-${date}.json`)
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+  const response = await fetch(`${apiBaseUrl}/api/reserve/${date}`)
 
   if (!response.ok) {
     throw new Error(`Failed to fetch reserve data for ${date}: ${response.statusText}`)
@@ -242,7 +244,8 @@ function generateMockJEPXData(area: Area, date: string): JEPXResponse {
 
 // Fetch live JEPX price data
 async function fetchLiveJEPXData(area: Area, date: string): Promise<JEPXResponse> {
-  const response = await fetch(`/data/jp/jepx/spot-${area}-${date}.json`)
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+  const response = await fetch(`${apiBaseUrl}/api/jepx/${area}/${date}`)
 
   if (!response.ok) {
     throw new Error(`Failed to fetch JEPX data for ${area}/${date}: ${response.statusText}`)
