@@ -14,16 +14,11 @@ ENV GOTOOLCHAIN=local
 # Copy go.mod and go.sum first for dependency caching
 COPY go.mod go.sum ./
 
-# Copy source code directories explicitly
-COPY cmd/ ./cmd/
-COPY internal/ ./internal/
-COPY pkg/ ./pkg/
-
-# Debug: Verify cmd/ was copied
-RUN echo "=== Verifying cmd/ directory ===" && ls -la cmd/
-
 # Download dependencies (go.mod already has correct version)
 RUN go mod download
+
+# Copy all source code
+COPY . .
 
 # Build main API binary
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o api ./cmd/api
