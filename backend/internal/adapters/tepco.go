@@ -13,6 +13,8 @@ import (
 
 	"github.com/teo/aversome/backend/internal/demand"
 	"github.com/teo/aversome/backend/pkg/timeutil"
+	"golang.org/x/text/encoding/japanese"
+	"golang.org/x/text/transform"
 )
 
 // TEPCOAdapter normalizes Tokyo Electric Power Company demand data.
@@ -38,13 +40,27 @@ func NewTEPCOAdapter() *TEPCOAdapter {
 // - Units: 万kW (10,000 kW) = 10 MW → convert to MW
 // - Forecast may be empty for some rows
 func (a *TEPCOAdapter) ParseCSV(reader io.Reader, date string) (*demand.Response, error) {
-	csvReader := csv.NewReader(reader)
-	csvReader.TrimLeadingSpace = true
+	// Convert from Shift-JIS to UTF-8
+	// TEPCO CSV files are encoded in Shift-JIS (Japanese encoding)
+	utf8Reader := transform.NewReader(reader, japanese.ShiftJIS.NewDecoder())
 
-	// Read header
-	header, err := csvReader.Read()
-	if err != nil {
-		return nil, fmt.Errorf("failed to read CSV header: %w", err)
+	csvReader := csv.NewReader(utf8Reader)
+	csvReader.TrimLeadingSpace = true
+	csvReader.FieldsPerRecord = -1 // Allow variable number of fields (for metadata rows)
+
+	// Find the header row (skip metadata rows)
+	// The actual data starts with a row beginning with "DATE"
+	var header []string
+	var err error
+	for {
+		header, err = csvReader.Read()
+		if err != nil {
+			return nil, fmt.Errorf("failed to find CSV header: %w", err)
+		}
+		// Check if this row starts with "DATE" (the actual header)
+		if len(header) > 0 && strings.ToUpper(strings.TrimSpace(header[0])) == "DATE" {
+			break
+		}
 	}
 
 	// Auto-detect column indices
@@ -83,8 +99,12 @@ func (a *TEPCOAdapter) ParseCSV(reader io.Reader, date string) (*demand.Response
 		rowDate := strings.TrimSpace(record[colIndices["date"]])
 		rowTime := strings.TrimSpace(record[colIndices["time"]])
 
+		// Normalize date format (2025/11/1 → 2025-11-01)
+		normalizedRowDate := a.normalizeDate(rowDate)
+		normalizedDate := a.normalizeDate(date)
+
 		// Only include rows matching the requested date
-		if rowDate != date {
+		if normalizedRowDate != normalizedDate {
 			continue
 		}
 
@@ -161,7 +181,7 @@ func (a *TEPCOAdapter) detectColumns(header []string) map[string]int {
 			indices["time"] = i
 		case strings.Contains(col, "実績") || strings.Contains(col, "actual"):
 			indices["actual"] = i
-		case strings.Contains(col, "予測") || strings.Contains(col, "forecast"):
+		case strings.Contains(col, "予測") || strings.Contains(col, "予想") || strings.Contains(col, "forecast"):
 			indices["forecast"] = i
 		}
 	}
@@ -180,4 +200,27 @@ func (a *TEPCOAdapter) parseHour(timeStr string) (int, error) {
 		return 0, fmt.Errorf("invalid hour: %s", timeStr)
 	}
 	return hour, nil
+}
+
+// normalizeDate converts date from various formats to YYYY-MM-DD.
+// Supports: "2025/11/1", "2025-11-01", "2025/11/01"
+func (a *TEPCOAdapter) normalizeDate(dateStr string) string {
+	// Replace / with -
+	dateStr = strings.ReplaceAll(dateStr, "/", "-")
+
+	// Parse and reformat to ensure zero-padding
+	// Try parsing as 2006-1-2 (without zero padding)
+	t, err := time.Parse("2006-1-2", dateStr)
+	if err == nil {
+		return t.Format("2006-01-02")
+	}
+
+	// Try parsing as 2006-01-02 (with zero padding)
+	t, err = time.Parse("2006-01-02", dateStr)
+	if err == nil {
+		return t.Format("2006-01-02")
+	}
+
+	// Return as-is if parsing fails
+	return dateStr
 }

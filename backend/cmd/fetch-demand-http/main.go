@@ -63,19 +63,32 @@ func main() {
 		// Attempt HTTP fetch
 		start := time.Now()
 		var url string
+		var err error
+
+		fetcher := pkghttp.NewFetcher(pkghttp.DefaultConfig())
+
 		if area == "tokyo" {
-			url = cfg.TEPCO.URL
+			// TEPCO provides data in monthly ZIP archives
+			// Format: YYYYMM_power_usage.zip containing YYYYMMDD_power_usage.csv files
+			parsedDate, _ := timeutil.ParseDate(date)
+			yearMonth := parsedDate.Format("200601") // YYYYMM
+			dayFile := parsedDate.Format("20060102") + "_power_usage.csv" // YYYYMMDD_power_usage.csv
+
+			url = fmt.Sprintf("https://www.tepco.co.jp/forecast/html/images/%s_power_usage.zip", yearMonth)
 			sourceName = cfg.TEPCO.Name
+
+			lgr.Info(fmt.Sprintf("Attempting to fetch TEPCO ZIP from %s (looking for %s)", url, dayFile))
+
+			reader, err = fetcher.FetchFromZip(url, dayFile)
 		} else {
 			url = cfg.Kansai.URL
 			sourceName = cfg.Kansai.Name
+
+			lgr.Info(fmt.Sprintf("Attempting HTTP fetch from %s", url))
+
+			reader, err = fetcher.Fetch(url)
 		}
 
-		lgr.Info(fmt.Sprintf("Attempting HTTP fetch from %s", url))
-
-		fetcher := pkghttp.NewFetcher(pkghttp.DefaultConfig())
-		var err error
-		reader, err = fetcher.Fetch(url)
 		fetchDuration = time.Since(start)
 
 		if err != nil {

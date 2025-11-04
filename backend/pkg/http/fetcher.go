@@ -3,10 +3,15 @@
 package http
 
 import (
+	"archive/zip"
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"math"
 	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -109,8 +114,24 @@ func (f *Fetcher) Fetch(url string) (io.ReadCloser, error) {
 			continue
 		}
 
+		// Check for gzip encoding and decompress if needed
+		body := resp.Body
+		if strings.Contains(strings.ToLower(resp.Header.Get("Content-Encoding")), "gzip") {
+			gzipReader, err := gzip.NewReader(resp.Body)
+			if err != nil {
+				resp.Body.Close()
+				lastErr = fmt.Errorf("failed to create gzip reader: %w", err)
+				continue
+			}
+			// Return a wrapper that closes both gzip reader and original body
+			body = &gzipReadCloser{
+				Reader: gzipReader,
+				body:   resp.Body,
+			}
+		}
+
 		// Success
-		return resp.Body, nil
+		return body, nil
 	}
 
 	// All retries exhausted
@@ -126,4 +147,73 @@ func (f *Fetcher) calculateBackoff(attempt int) time.Duration {
 		backoff = float64(f.config.MaxBackoff)
 	}
 	return time.Duration(backoff)
+}
+
+// FetchFromZip downloads a ZIP file and extracts a specific file by name pattern.
+// Returns the extracted file contents as an io.ReadCloser.
+// Pattern can use filepath.Match syntax (e.g., "202511*.csv").
+func (f *Fetcher) FetchFromZip(zipURL, filePattern string) (io.ReadCloser, error) {
+	// Fetch the ZIP file
+	zipBody, err := f.Fetch(zipURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch ZIP: %w", err)
+	}
+	defer zipBody.Close()
+
+	// Read ZIP contents into memory
+	zipData, err := io.ReadAll(zipBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read ZIP data: %w", err)
+	}
+
+	// Open ZIP archive
+	zipReader, err := zip.NewReader(bytes.NewReader(zipData), int64(len(zipData)))
+	if err != nil {
+		return nil, fmt.Errorf("failed to open ZIP archive: %w", err)
+	}
+
+	// Find matching file in ZIP
+	for _, file := range zipReader.File {
+		matched, err := filepath.Match(filePattern, file.Name)
+		if err != nil {
+			continue
+		}
+		if matched {
+			// Open the file
+			rc, err := file.Open()
+			if err != nil {
+				return nil, fmt.Errorf("failed to open file %s in ZIP: %w", file.Name, err)
+			}
+
+			// Read file contents into memory (since ZIP reader needs random access)
+			data, err := io.ReadAll(rc)
+			rc.Close()
+			if err != nil {
+				return nil, fmt.Errorf("failed to read file %s from ZIP: %w", file.Name, err)
+			}
+
+			// Return as ReadCloser
+			return io.NopCloser(bytes.NewReader(data)), nil
+		}
+	}
+
+	return nil, fmt.Errorf("no file matching pattern %q found in ZIP", filePattern)
+}
+
+// gzipReadCloser wraps a gzip.Reader and ensures both the gzip reader
+// and underlying response body are properly closed.
+type gzipReadCloser struct {
+	*gzip.Reader
+	body io.ReadCloser
+}
+
+// Close closes both the gzip reader and underlying response body.
+func (g *gzipReadCloser) Close() error {
+	// Close gzip reader first
+	if err := g.Reader.Close(); err != nil {
+		g.body.Close() // Still close body even if gzip close fails
+		return err
+	}
+	// Close underlying response body
+	return g.body.Close()
 }
