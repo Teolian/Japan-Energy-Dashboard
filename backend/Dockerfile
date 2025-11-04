@@ -14,6 +14,10 @@ ENV GOTOOLCHAIN=local
 # Copy all source code first (needed for go mod tidy)
 COPY . .
 
+# Debug: List copied files
+RUN echo "=== Listing /build directory ===" && ls -la
+RUN echo "=== Listing /build/cmd ===" && ls -la cmd/ || echo "cmd/ not found"
+
 # Force Go 1.23 in go.mod (remove toolchain directive)
 RUN sed -i '/^toolchain/d' go.mod && \
     sed -i 's/^go 1\.24.*/go 1.23/' go.mod
