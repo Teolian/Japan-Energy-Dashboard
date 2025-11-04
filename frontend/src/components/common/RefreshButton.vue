@@ -56,7 +56,8 @@ async function refreshData() {
   sources.value = sources.value.map(s => ({ ...s, status: 'loading' }))
 
   try {
-    const response = await fetch('http://localhost:8080/api/data/refresh', {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+    const response = await fetch(`${apiBaseUrl}/api/data/refresh`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
