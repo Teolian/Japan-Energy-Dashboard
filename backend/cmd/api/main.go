@@ -65,6 +65,11 @@ func main() {
 	// Data refresh endpoint
 	router.POST("/api/data/refresh", handleRefresh)
 
+	// GET endpoints for data retrieval
+	router.GET("/api/demand/:area/:date", handleGetDemand)
+	router.GET("/api/jepx/:area/:date", handleGetJEPX)
+	router.GET("/api/reserve/:date", handleGetReserve)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -237,4 +242,114 @@ func fetchReserve(date string) DataFetchResult {
 		FilePath: outputPath,
 		Duration: duration.String(),
 	}
+}
+
+// GET /api/demand/:area/:date - Retrieve demand data
+func handleGetDemand(c *gin.Context) {
+	area := c.Param("area")
+	date := c.Param("date")
+
+	// Validate area
+	if area != "tokyo" && area != "kansai" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid area. Must be 'tokyo' or 'kansai'"})
+		return
+	}
+
+	// Construct file path
+	filePath := filepath.Join("public", "data", "jp", area, fmt.Sprintf("demand-%s.json", date))
+
+	// Check if file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		// File doesn't exist - fetch fresh data
+		log.Printf("[GET /api/demand] File not found, fetching fresh data for %s/%s", area, date)
+		result := fetchDemand(area, date)
+
+		if result.Status != "success" {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "Failed to fetch demand data",
+				"details": result.Error,
+			})
+			return
+		}
+	}
+
+	// Read and return file
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read data file"})
+		return
+	}
+
+	c.Data(http.StatusOK, "application/json", data)
+}
+
+// GET /api/jepx/:area/:date - Retrieve JEPX spot price data
+func handleGetJEPX(c *gin.Context) {
+	area := c.Param("area")
+	date := c.Param("date")
+
+	// Validate area
+	if area != "tokyo" && area != "kansai" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid area. Must be 'tokyo' or 'kansai'"})
+		return
+	}
+
+	// Construct file path
+	filePath := filepath.Join("public", "data", "jp", "jepx", fmt.Sprintf("spot-%s-%s.json", area, date))
+
+	// Check if file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		// File doesn't exist - fetch fresh data
+		log.Printf("[GET /api/jepx] File not found, fetching fresh data for %s/%s", area, date)
+		result := fetchJEPX(area, date)
+
+		if result.Status != "success" {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "Failed to fetch JEPX data",
+				"details": result.Error,
+			})
+			return
+		}
+	}
+
+	// Read and return file
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read data file"})
+		return
+	}
+
+	c.Data(http.StatusOK, "application/json", data)
+}
+
+// GET /api/reserve/:date - Retrieve reserve margin data
+func handleGetReserve(c *gin.Context) {
+	date := c.Param("date")
+
+	// Construct file path
+	filePath := filepath.Join("public", "data", "jp", "system", fmt.Sprintf("reserve-%s.json", date))
+
+	// Check if file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		// File doesn't exist - fetch fresh data
+		log.Printf("[GET /api/reserve] File not found, fetching fresh data for %s", date)
+		result := fetchReserve(date)
+
+		if result.Status != "success" {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "Failed to fetch reserve data",
+				"details": result.Error,
+			})
+			return
+		}
+	}
+
+	// Read and return file
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read data file"})
+		return
+	}
+
+	c.Data(http.StatusOK, "application/json", data)
 }
