@@ -45,7 +45,11 @@ func main() {
 
 	// CORS configuration for frontend
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:5173", "http://localhost:5174"}
+	config.AllowOrigins = []string{
+		"http://localhost:5173",
+		"http://localhost:5174",
+		"https://japan-energy-dashboard.vercel.app",
+	}
 	config.AllowMethods = []string{"GET", "POST", "OPTIONS"}
 	config.AllowHeaders = []string{"Origin", "Content-Type"}
 	router.Use(cors.New(config))

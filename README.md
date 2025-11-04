@@ -26,6 +26,13 @@ Dashboard for tracking electricity demand, spot prices, and system reserves acro
 - Reserve margin calculations
 - Critical threshold alerts
 
+**Weather & Solar Forecast**
+- Hourly solar radiation forecast (GHI, DNI, DHI)
+- Cloud cover and temperature tracking
+- Estimated PV generation potential
+- Peak solar hour detection
+- Best time recommendations for PV-powered operations
+
 **Data Management**
 - Mock/Live data mode toggle
 - Manual data refresh
@@ -56,6 +63,7 @@ Dashboard for tracking electricity demand, spot prices, and system reserves acro
 - Kansai Electric - Kansai area demand
 - JEPX - day-ahead spot prices
 - OCCTO - system reserve capacity
+- Open-Meteo - solar radiation & weather forecast
 
 **Mock Mode:**
 - Sample data in `frontend/public/data/jp/`
@@ -66,7 +74,7 @@ Dashboard for tracking electricity demand, spot prices, and system reserves acro
 
 ```
 Frontend (Vue 3)
-├── Pinia Stores (demand, jepx, reserve)
+├── Pinia Stores (demand, jepx, reserve, weather, settlement)
 ├── Data Client (mock/live switching)
 └── Chart.js visualizations
 
@@ -130,6 +138,27 @@ cd frontend
 npm run build
 # Output: dist/ directory
 ```
+
+## Deployment
+
+### Backend (Railway)
+```bash
+cd backend
+railway login
+railway init
+railway up
+# Get URL: railway status
+```
+
+### Frontend (Vercel)
+```bash
+cd frontend
+# Update .env.production with Railway URL
+npm run build
+vercel --prod
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 
 ## Data Formats
 
