@@ -14,7 +14,10 @@
 *.dll
 *.so
 *.dylib
-api
+/api
+/fetch-demand
+/fetch-jepx
+/fetch-reserve
 *.test
 *.out
 
