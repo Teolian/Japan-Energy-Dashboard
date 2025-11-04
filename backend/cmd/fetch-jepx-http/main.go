@@ -131,7 +131,7 @@ func main() {
 	}
 
 	// Create output directory
-	outputDir := filepath.Join("..", "public", "data", "jp", "jepx")
+	outputDir := filepath.Join("public", "data", "jp", "jepx")
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		log.Fatalf("Failed to create output directory: %v", err)
 	}
