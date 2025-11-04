@@ -149,8 +149,7 @@ func fetchDemand(area, date string) DataFetchResult {
 	source := fmt.Sprintf("%s-demand", area)
 
 	cmd := exec.Command(
-		"go", "run",
-		"cmd/fetch-demand-http/main.go",
+		"./fetch-demand",
 		"-area", area,
 		"-date", date,
 		"--use-http",
@@ -184,8 +183,7 @@ func fetchJEPX(area, date string) DataFetchResult {
 	source := fmt.Sprintf("%s-jepx", area)
 
 	cmd := exec.Command(
-		"go", "run",
-		"cmd/fetch-jepx/main.go",
+		"./fetch-jepx",
 		"-area", area,
 		"-date", date,
 	)
@@ -217,8 +215,7 @@ func fetchReserve(date string) DataFetchResult {
 	source := "reserve"
 
 	cmd := exec.Command(
-		"go", "run",
-		"cmd/fetch-reserve/main.go",
+		"./fetch-reserve",
 		"-date", date,
 	)
 
