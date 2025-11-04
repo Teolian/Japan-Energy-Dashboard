@@ -11,12 +11,16 @@ WORKDIR /build
 # Set Go toolchain to local to avoid version conflicts
 ENV GOTOOLCHAIN=local
 
-# Copy all source code first (needed for go mod tidy)
-COPY . .
+# Copy go.mod and go.sum first for dependency caching
+COPY go.mod go.sum ./
 
-# Debug: List copied files
-RUN echo "=== Listing /build directory ===" && ls -la
-RUN echo "=== Listing /build/cmd ===" && ls -la cmd/ || echo "cmd/ not found"
+# Copy source code directories explicitly
+COPY cmd/ ./cmd/
+COPY internal/ ./internal/
+COPY pkg/ ./pkg/
+
+# Debug: Verify cmd/ was copied
+RUN echo "=== Verifying cmd/ directory ===" && ls -la cmd/
 
 # Force Go 1.23 in go.mod (remove toolchain directive)
 RUN sed -i '/^toolchain/d' go.mod && \
