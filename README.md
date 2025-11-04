@@ -34,10 +34,11 @@ Dashboard for tracking electricity demand, spot prices, and system reserves acro
 - Best time recommendations for PV-powered operations
 
 **Data Management**
-- Mock/Live data mode toggle
+- Mock/Live data mode toggle (button UI)
+- Date persistence across mode switches
 - Manual data refresh
 - Progress tracking for data fetching
-- Date navigation
+- Date navigation (previous/next day)
 
 ## Tech Stack
 
@@ -54,12 +55,14 @@ Dashboard for tracking electricity demand, spot prices, and system reserves acro
 - Gin framework
 - HTTP adapters for TEPCO, Kansai Electric, JEPX, OCCTO APIs
 - Custom HTTP client with retry logic
+- ZIP archive extraction (TEPCO monthly data)
+- Shift-JIS to UTF-8 encoding conversion
 - JSON file caching
 
 ## Data Sources
 
 **Live Mode:**
-- TEPCO - Tokyo area demand
+- TEPCO - Tokyo area demand (ZIP monthly archives, Shift-JIS)
 - Kansai Electric - Kansai area demand
 - JEPX - day-ahead spot prices
 - OCCTO - system reserve capacity
@@ -226,12 +229,19 @@ Go HTTP client features:
 - Exponential backoff retry
 - Circuit breaker pattern
 - Browser-like headers to avoid bot detection
+- Automatic gzip decompression
+- ZIP archive extraction with pattern matching
 - Connection pooling
 - Configurable timeouts
 
 ```go
 fetcher := http.NewFetcher(http.BrowserConfig())
+
+// Standard fetch
 body, err := fetcher.Fetch(url)
+
+// ZIP archive extraction
+reader, err := fetcher.FetchFromZip(zipURL, "*.csv")
 ```
 
 ## License
