@@ -42,6 +42,9 @@ COPY --from=builder /build/fetch-demand .
 COPY --from=builder /build/fetch-jepx .
 COPY --from=builder /build/fetch-reserve .
 
+# Copy testdata files for fallback mode
+COPY --from=builder /build/internal/adapters/testdata ./internal/adapters/testdata
+
 # Copy timezone data
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
