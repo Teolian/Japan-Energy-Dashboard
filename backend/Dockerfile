@@ -26,7 +26,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o 
 # Build fetch command binaries
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o fetch-demand ./cmd/fetch-demand-http
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o fetch-jepx ./cmd/fetch-jepx-http
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o fetch-reserve ./cmd/fetch-reserve
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o fetch-reserve ./cmd/fetch-reserve-http
 
 # Stage 2: Runtime
 FROM alpine:latest
