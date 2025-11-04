@@ -186,6 +186,7 @@ func fetchJEPX(area, date string) DataFetchResult {
 		"./fetch-jepx",
 		"-area", area,
 		"-date", date,
+		"--use-http",
 	)
 
 	output, err := cmd.CombinedOutput()

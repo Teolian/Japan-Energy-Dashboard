@@ -30,7 +30,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o 
 
 # Build fetch command binaries
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o fetch-demand ./cmd/fetch-demand-http
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o fetch-jepx ./cmd/fetch-jepx
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o fetch-jepx ./cmd/fetch-jepx-http
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o fetch-reserve ./cmd/fetch-reserve
 
 # Stage 2: Runtime

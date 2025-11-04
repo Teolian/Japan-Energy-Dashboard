@@ -42,3 +42,6 @@ temp/
 logs/
 
 # Compiled fetch binaries (for local testing)
+fetch-demand
+fetch-reserve
+fetch-jepx
