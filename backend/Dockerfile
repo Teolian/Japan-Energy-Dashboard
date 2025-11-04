@@ -22,14 +22,7 @@ COPY pkg/ ./pkg/
 # Debug: Verify cmd/ was copied
 RUN echo "=== Verifying cmd/ directory ===" && ls -la cmd/
 
-# Force Go 1.23 in go.mod (remove toolchain directive)
-RUN sed -i '/^toolchain/d' go.mod && \
-    sed -i 's/^go 1\.24.*/go 1.23/' go.mod
-
-# Sync dependencies
-RUN go mod tidy
-
-# Download dependencies
+# Download dependencies (go.mod already has correct version)
 RUN go mod download
 
 # Build main API binary
