@@ -63,6 +63,7 @@ func (a *KansaiAdapter) ParseCSV(reader io.Reader, date string) (*demand.Respons
 
 	hasForecast := false
 	lineNum := 1
+	seenHours := make(map[int]bool) // Track hours to avoid duplicates
 
 	// Read data rows
 	for {
@@ -85,10 +86,22 @@ func (a *KansaiAdapter) ParseCSV(reader io.Reader, date string) (*demand.Respons
 		}
 
 		// Parse hour from time string
-		hour, err := a.parseHour(rowTime)
+		// Filter only hourly data (skip 5-minute intervals like "0:05", "0:10")
+		hour, minutes, err := a.parseTime(rowTime)
 		if err != nil {
 			return nil, fmt.Errorf("invalid time format at line %d: %s", lineNum, rowTime)
 		}
+
+		// Skip non-hourly data points (only include :00 minutes)
+		if minutes != 0 {
+			continue
+		}
+
+		// Skip duplicate hours (CSV contains multiple blocks with same hours)
+		if seenHours[hour] {
+			continue
+		}
+		seenHours[hour] = true
 
 		// Create timestamp
 		ts := time.Date(baseDate.Year(), baseDate.Month(), baseDate.Day(), hour, 0, 0, 0, timeutil.TokyoLocation)
@@ -164,15 +177,19 @@ func (a *KansaiAdapter) detectColumns(header []string) map[string]int {
 	return indices
 }
 
-// parseHour extracts hour from time string.
-func (a *KansaiAdapter) parseHour(timeStr string) (int, error) {
+// parseTime extracts hour and minutes from time string like "0:00", "13:00", "0:05".
+func (a *KansaiAdapter) parseTime(timeStr string) (hour int, minutes int, err error) {
 	parts := strings.Split(timeStr, ":")
 	if len(parts) != 2 {
-		return 0, fmt.Errorf("invalid time format: %s", timeStr)
+		return 0, 0, fmt.Errorf("invalid time format: %s", timeStr)
 	}
-	hour, err := strconv.Atoi(parts[0])
+	hour, err = strconv.Atoi(parts[0])
 	if err != nil || hour < 0 || hour > 23 {
-		return 0, fmt.Errorf("invalid hour: %s", timeStr)
+		return 0, 0, fmt.Errorf("invalid hour: %s", timeStr)
 	}
-	return hour, nil
+	minutes, err = strconv.Atoi(parts[1])
+	if err != nil || minutes < 0 || minutes > 59 {
+		return 0, 0, fmt.Errorf("invalid minutes: %s", timeStr)
+	}
+	return hour, minutes, nil
 }
