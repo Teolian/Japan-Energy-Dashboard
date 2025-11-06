@@ -62,8 +62,9 @@ jobs:
           if [ -n "${{ github.event.inputs.date }}" ]; then
             TARGET_DATE="${{ github.event.inputs.date }}"
           else
-            # Calculate JST date (UTC + 9 hours)
-            TARGET_DATE=$(TZ='Asia/Tokyo' date +%Y-%m-%d)
+            # Fetch data for YESTERDAY (data published next day)
+            # Calculate JST date (UTC + 9 hours) minus 1 day
+            TARGET_DATE=$(TZ='Asia/Tokyo' date -d 'yesterday' +%Y-%m-%d)
           fi
           echo "target_date=$TARGET_DATE" >> $GITHUB_OUTPUT
           echo "📅 Target date: $TARGET_DATE"
