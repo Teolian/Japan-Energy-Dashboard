@@ -1,0 +1,59 @@
+{
+  "date": "2025-11-04",
+  "areas": [
+    {
+      "area": "中国",
+      "reserve_margin_pct": 12.344709685256564,
+      "status": "stable"
+    },
+    {
+      "area": "北海道",
+      "reserve_margin_pct": 16.847523650528657,
+      "status": "stable"
+    },
+    {
+      "area": "東北",
+      "reserve_margin_pct": 16.77049860590428,
+      "status": "stable"
+    },
+    {
+      "area": "tokyo",
+      "reserve_margin_pct": 14.202684319859356,
+      "status": "stable"
+    },
+    {
+      "area": "北陸",
+      "reserve_margin_pct": 12.55159612143712,
+      "status": "stable"
+    },
+    {
+      "area": "kansai",
+      "reserve_margin_pct": 14.818919051581261,
+      "status": "stable"
+    },
+    {
+      "area": "四国",
+      "reserve_margin_pct": 27.676186809735626,
+      "status": "stable"
+    },
+    {
+      "area": "九州",
+      "reserve_margin_pct": 9.569083605831867,
+      "status": "stable"
+    },
+    {
+      "area": "沖縄",
+      "reserve_margin_pct": 39.532049656217396,
+      "status": "stable"
+    },
+    {
+      "area": "中部",
+      "reserve_margin_pct": 11.988777983294142,
+      "status": "stable"
+    }
+  ],
+  "source": {
+    "name": "OCCTO",
+    "url": "https://www.occto.or.jp/"
+  }
+}
