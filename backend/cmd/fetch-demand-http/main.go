@@ -22,11 +22,12 @@ import (
 )
 
 func main() {
-	var date, area string
+	var date, area, outputPath string
 	var useHTTP, jsonLog bool
 
 	flag.StringVar(&date, "date", "", "Date in YYYY-MM-DD format (defaults to today)")
 	flag.StringVar(&area, "area", "tokyo", "Area: tokyo or kansai")
+	flag.StringVar(&outputPath, "output", "", "Output file path (defaults to public/data/jp/{area}/demand-{date}.json)")
 	flag.BoolVar(&useHTTP, "use-http", false, "Use real HTTP fetching (default: testdata)")
 	flag.BoolVar(&jsonLog, "json-log", false, "Enable JSON structured logging")
 	flag.Parse()
@@ -151,14 +152,20 @@ func main() {
 		log.Fatalf("Failed to marshal JSON: %v", err)
 	}
 
+	// Determine output path
+	if outputPath == "" {
+		// Default path
+		outputDir := filepath.Join("public", "data", "jp", area)
+		outputPath = filepath.Join(outputDir, fmt.Sprintf("demand-%s.json", date))
+	}
+
 	// Create output directory
-	outputDir := filepath.Join("public", "data", "jp", area)
+	outputDir := filepath.Dir(outputPath)
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		log.Fatalf("Failed to create output directory: %v", err)
 	}
 
 	// Write JSON file
-	outputPath := filepath.Join(outputDir, fmt.Sprintf("demand-%s.json", date))
 	if err := os.WriteFile(outputPath, jsonData, 0644); err != nil {
 		log.Fatalf("Failed to write JSON file: %v", err)
 	}

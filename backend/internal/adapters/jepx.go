@@ -25,21 +25,16 @@ func NewJEPXAdapter() *JEPXAdapter {
 }
 
 // ParseCSV parses JEPX CSV data into normalized jepx.Response.
-// CSV format (expected):
-//   Date,Hour,Tokyo_Price,Kansai_Price
-//   2025-10-23,0,24.32,23.15
-//   2025-10-23,1,22.50,21.80
+// CSV format (japanesepower.org):
+//   datetime,Date,PeriodID,System Price Yen/kWh,Tokyo Yen/kWh,Kansai Yen/kWh,...
+//   2025-11-03 00:00:00,2025-11-03,1,9.34,11.23,7.32,...
+//   2025-11-03 00:30:00,2025-11-03,2,9.00,10.72,7.00,...
 //   ...
-//   2025-10-23,23,26.10,25.30
-//
-// Or Japanese headers:
-//   日付,時,東京価格,関西価格
 //
 // Notes:
-// - Header detection by column names (order may vary)
+// - 30-minute intervals (48 periods/day) - we extract only hourly (:00:00)
 // - Prices are in JPY/kWh
-// - Hour is 0-23 (24-hour format)
-// - Multiple areas per date
+// - Multiple areas in columns (Tokyo, Kansai, etc.)
 func (a *JEPXAdapter) ParseCSV(reader io.Reader, date, area string) (*jepx.Response, error) {
 	csvReader := csv.NewReader(reader)
 	csvReader.TrimLeadingSpace = true
@@ -52,8 +47,11 @@ func (a *JEPXAdapter) ParseCSV(reader io.Reader, date, area string) (*jepx.Respo
 
 	// Auto-detect column indices
 	colIndices := a.detectColumns(header, area)
-	if colIndices["date"] == -1 || colIndices["hour"] == -1 || colIndices["price"] == -1 {
-		return nil, fmt.Errorf("required columns not found in header: %v", header)
+	if colIndices["datetime"] == -1 && colIndices["date"] == -1 {
+		return nil, fmt.Errorf("datetime or date column not found in header: %v", header)
+	}
+	if colIndices["price"] == -1 {
+		return nil, fmt.Errorf("price column for area %s not found in header: %v", area, header)
 	}
 
 	resp := jepx.NewResponse(date, area)
@@ -76,23 +74,58 @@ func (a *JEPXAdapter) ParseCSV(reader io.Reader, date, area string) (*jepx.Respo
 		}
 		lineNum++
 
-		// Extract date (format: YYYY-MM-DD or similar)
-		rowDate := strings.TrimSpace(record[colIndices["date"]])
-		rowDate = a.normalizeDate(rowDate)
+		// Extract datetime or date+hour
+		var rowDate string
+		var hour int
+
+		if colIndices["datetime"] != -1 {
+			// Parse datetime column (format: "2025-11-03 00:00:00")
+			datetimeStr := strings.TrimSpace(record[colIndices["datetime"]])
+
+			// Extract date and hour from datetime
+			parts := strings.Split(datetimeStr, " ")
+			if len(parts) >= 2 {
+				rowDate = a.normalizeDate(parts[0])
+
+				// Extract hour from time (HH:MM:SS)
+				timeParts := strings.Split(parts[1], ":")
+				if len(timeParts) >= 1 {
+					hour, err = strconv.Atoi(timeParts[0])
+					if err != nil {
+						continue // Skip invalid rows
+					}
+
+					// Only include hourly data (ignore :30:00 intervals)
+					if len(timeParts) >= 2 {
+						minute := timeParts[1]
+						if minute != "00" {
+							continue // Skip 30-minute intervals
+						}
+					}
+				}
+			} else {
+				continue // Skip malformed datetime
+			}
+		} else {
+			// Fallback: separate date and hour columns
+			rowDate = strings.TrimSpace(record[colIndices["date"]])
+			rowDate = a.normalizeDate(rowDate)
+
+			hourStr := strings.TrimSpace(record[colIndices["hour"]])
+			hour, err = strconv.Atoi(hourStr)
+			if err != nil {
+				return nil, fmt.Errorf("invalid hour at line %d: %s", lineNum, hourStr)
+			}
+		}
 
 		// Only include rows matching the requested date
 		if rowDate != date {
 			continue
 		}
 
-		// Parse hour (0-23)
-		hourStr := strings.TrimSpace(record[colIndices["hour"]])
-		hour, err := strconv.Atoi(hourStr)
-		if err != nil {
-			return nil, fmt.Errorf("invalid hour at line %d: %s", lineNum, hourStr)
-		}
+		// Validate hour range
 		if hour < 0 || hour > 23 {
-			return nil, fmt.Errorf("hour out of range (0-23) at line %d: %d", lineNum, hour)
+			continue // Skip out-of-range hours
 		}
 
 		// Parse price (JPY/kWh)
@@ -129,36 +162,36 @@ func (a *JEPXAdapter) ParseCSV(reader io.Reader, date, area string) (*jepx.Respo
 }
 
 // detectColumns finds column indices by header names.
-// Returns map with keys: date, hour, price.
+// Returns map with keys: datetime, date, hour, price.
 func (a *JEPXAdapter) detectColumns(header []string, area string) map[string]int {
 	indices := map[string]int{
-		"date":  -1,
-		"hour":  -1,
-		"price": -1,
+		"datetime": -1,
+		"date":     -1,
+		"hour":     -1,
+		"price":    -1,
 	}
 
-	// Determine price column name based on area
-	priceColumn := area + "_price"
-	if area == "tokyo" {
-		priceColumn = "tokyo_price"
-	} else if area == "kansai" {
-		priceColumn = "kansai_price"
-	}
+	// Determine area-specific price column patterns
+	// Format: "Tokyo Yen/kWh", "Kansai Yen/kWh"
+	areaCapitalized := strings.Title(strings.ToLower(area))
 
 	for i, col := range header {
-		col = strings.ToLower(strings.TrimSpace(col))
+		colLower := strings.ToLower(strings.TrimSpace(col))
+
 		switch {
-		case strings.Contains(col, "date") || col == "日付":
+		case colLower == "datetime":
+			indices["datetime"] = i
+		case colLower == "date" || col == "日付":
 			indices["date"] = i
-		case strings.Contains(col, "hour") || col == "時" || col == "時刻":
+		case colLower == "hour" || col == "時" || col == "時刻":
 			indices["hour"] = i
-		case strings.Contains(col, priceColumn) || col == "東京価格" && area == "tokyo" || col == "関西価格" && area == "kansai":
+		case strings.Contains(colLower, strings.ToLower(areaCapitalized)) && strings.Contains(colLower, "yen/kwh"):
+			// Match "Tokyo Yen/kWh", "Kansai Yen/kWh"
 			indices["price"] = i
-		case strings.Contains(col, "price") || strings.Contains(col, "価格"):
-			// Fallback: generic price column
-			if indices["price"] == -1 {
-				indices["price"] = i
-			}
+		case col == "東京価格" && area == "tokyo":
+			indices["price"] = i
+		case col == "関西価格" && area == "kansai":
+			indices["price"] = i
 		}
 	}
 

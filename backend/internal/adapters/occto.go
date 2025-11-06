@@ -25,25 +25,30 @@ func NewOCCTOAdapter() *OCCTOAdapter {
 }
 
 // ParseCSV parses OCCTO CSV data into normalized reserve.Response.
-// CSV format (expected):
-//   日付,エリア,予備率
-//   2025-10-24,東京,8.5
-//   2025-10-24,関西,10.2
-//
-// Or English headers:
-//   DATE,AREA,RESERVE_MARGIN
-//   2025-10-24,tokyo,8.5
-//   2025-10-24,kansai,10.2
+// CSV format (from web-kohyo.occto.or.jp):
+//   "2025/11/03 22:59 UPDATE"  ← skip this line
+//   "対象年月日","時刻","ブロックNo","エリア名","広域ブロック需要(MW)",...,"エリア需要(MW)","エリア供給力(MW)","エリア予備力(MW)"
+//   "2025/11/03","00:30","1","北海道",41823.764,46992.204,...,2854,3243,389
+//   "2025/11/03","00:30","1","東北",41823.764,46992.204,...,6589.48,7763.072,1173.592
 //
 // Notes:
-// - Header detection by column names (order may vary)
-// - Reserve margin is in percentage (%)
-// - Multiple areas per date
+// - First line is timestamp (skip it)
+// - 30-minute intervals (we aggregate to daily averages)
+// - エリア名 = area name, エリア需要(MW) = demand, エリア供給力(MW) = capacity
+// - Reserve margin calculated: (capacity - demand) / capacity * 100
 func (a *OCCTOAdapter) ParseCSV(reader io.Reader, date string) (*reserve.Response, error) {
 	csvReader := csv.NewReader(reader)
 	csvReader.TrimLeadingSpace = true
+	csvReader.LazyQuotes = true       // Handle quoted fields more flexibly
+	csvReader.FieldsPerRecord = -1    // Allow variable number of fields
 
-	// Read header
+	// Skip first line (UPDATE timestamp)
+	_, err := csvReader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read first line: %w", err)
+	}
+
+	// Read header (second line)
 	header, err := csvReader.Read()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read CSV header: %w", err)
@@ -51,8 +56,11 @@ func (a *OCCTOAdapter) ParseCSV(reader io.Reader, date string) (*reserve.Respons
 
 	// Auto-detect column indices
 	colIndices := a.detectColumns(header)
-	if colIndices["date"] == -1 || colIndices["area"] == -1 || colIndices["reserve_margin"] == -1 {
-		return nil, fmt.Errorf("required columns not found in header: %v", header)
+	if colIndices["date"] == -1 || colIndices["area"] == -1 {
+		return nil, fmt.Errorf("required columns (date, area) not found in header: %v", header)
+	}
+	if colIndices["demand"] == -1 || colIndices["capacity"] == -1 {
+		return nil, fmt.Errorf("required columns (demand, capacity) not found in header: %v", header)
 	}
 
 	resp := reserve.NewResponse(date)
@@ -62,7 +70,15 @@ func (a *OCCTOAdapter) ParseCSV(reader io.Reader, date string) (*reserve.Respons
 	}
 
 	lineNum := 1
-	areasFound := make(map[string]bool)
+	// Aggregate data by area (multiple 30-min intervals per area)
+	areaData := make(map[string]struct {
+		demandSum   float64
+		capacitySum float64
+		count       int
+	})
+
+	// Normalize date format (2025/11/03 → 2025-11-03)
+	normalizedDate := strings.ReplaceAll(date, "-", "/")
 
 	// Read data rows
 	for {
@@ -75,11 +91,11 @@ func (a *OCCTOAdapter) ParseCSV(reader io.Reader, date string) (*reserve.Respons
 		}
 		lineNum++
 
-		// Extract date
+		// Extract date (format: 2025/11/03)
 		rowDate := strings.TrimSpace(record[colIndices["date"]])
 
 		// Only include rows matching the requested date
-		if rowDate != date {
+		if rowDate != normalizedDate && rowDate != date {
 			continue
 		}
 
@@ -87,14 +103,44 @@ func (a *OCCTOAdapter) ParseCSV(reader io.Reader, date string) (*reserve.Respons
 		areaStr := strings.TrimSpace(record[colIndices["area"]])
 		area := a.normalizeArea(areaStr)
 		if area == "" {
-			return nil, fmt.Errorf("invalid area at line %d: %s", lineNum, areaStr)
+			continue // Skip unknown areas
 		}
 
-		// Parse reserve margin percentage
-		reserveStr := strings.TrimSpace(record[colIndices["reserve_margin"]])
-		reservePct, err := strconv.ParseFloat(reserveStr, 64)
+		// Parse demand (MW)
+		demandStr := strings.TrimSpace(record[colIndices["demand"]])
+		demand, err := strconv.ParseFloat(demandStr, 64)
 		if err != nil {
-			return nil, fmt.Errorf("invalid reserve margin at line %d: %s", lineNum, reserveStr)
+			continue // Skip invalid rows
+		}
+
+		// Parse capacity (MW)
+		capacityStr := strings.TrimSpace(record[colIndices["capacity"]])
+		capacity, err := strconv.ParseFloat(capacityStr, 64)
+		if err != nil {
+			continue // Skip invalid rows
+		}
+
+		// Aggregate by area
+		data := areaData[area]
+		data.demandSum += demand
+		data.capacitySum += capacity
+		data.count++
+		areaData[area] = data
+	}
+
+	// Calculate averages and reserve margins
+	for area, data := range areaData {
+		if data.count == 0 {
+			continue
+		}
+
+		avgDemand := data.demandSum / float64(data.count)
+		avgCapacity := data.capacitySum / float64(data.count)
+
+		// Calculate reserve margin: (capacity - demand) / capacity * 100
+		reservePct := 0.0
+		if avgCapacity > 0 {
+			reservePct = ((avgCapacity - avgDemand) / avgCapacity) * 100
 		}
 
 		// Derive status from percentage
@@ -106,7 +152,6 @@ func (a *OCCTOAdapter) ParseCSV(reader io.Reader, date string) (*reserve.Respons
 			Status:           status,
 		}
 		resp.Areas = append(resp.Areas, areaReserve)
-		areasFound[area] = true
 	}
 
 	// Validate we have data
@@ -114,34 +159,38 @@ func (a *OCCTOAdapter) ParseCSV(reader io.Reader, date string) (*reserve.Respons
 		return nil, fmt.Errorf("no data found for date %s", date)
 	}
 
-	// Add warning if missing expected areas
-	if !areasFound["tokyo"] || !areasFound["kansai"] {
-		resp.Meta = &reserve.Meta{
-			Warning: "Data for some areas not available for this date",
-		}
-	}
-
 	return resp, nil
 }
 
 // detectColumns finds column indices by header names.
-// Returns map with keys: date, area, reserve_margin.
+// Returns map with keys: date, area, demand, capacity.
 func (a *OCCTOAdapter) detectColumns(header []string) map[string]int {
 	indices := map[string]int{
-		"date":           -1,
-		"area":           -1,
-		"reserve_margin": -1,
+		"date":     -1,
+		"area":     -1,
+		"demand":   -1,
+		"capacity": -1,
 	}
 
 	for i, col := range header {
-		col = strings.ToLower(strings.TrimSpace(col))
+		colTrimmed := strings.TrimSpace(col)
+
 		switch {
-		case strings.Contains(col, "date") || col == "日付":
+		// Date: "対象年月日"
+		case strings.Contains(colTrimmed, "対象年月日") || strings.Contains(colTrimmed, "date"):
 			indices["date"] = i
-		case strings.Contains(col, "area") || col == "エリア" || col == "地域":
+
+		// Area: "エリア名"
+		case colTrimmed == "エリア名" || strings.Contains(colTrimmed, "area"):
 			indices["area"] = i
-		case strings.Contains(col, "reserve") || strings.Contains(col, "margin") || col == "予備率":
-			indices["reserve_margin"] = i
+
+		// Demand: "エリア需要(MW)" (NOT "広域ブロック需要")
+		case colTrimmed == "エリア需要(MW)":
+			indices["demand"] = i
+
+		// Capacity: "エリア供給力(MW)" (NOT "広域ブロック供給力")
+		case colTrimmed == "エリア供給力(MW)":
+			indices["capacity"] = i
 		}
 	}
 

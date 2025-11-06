@@ -1,0 +1,162 @@
+# GitHub Actions: Daily Energy Data Fetch
+# Runs every day at 00:30 JST (15:30 UTC)
+# Fetches data from TEPCO, Kansai, JEPX, OCCTO and commits to repository
+# Vercel will auto-deploy with fresh data
+
+name: Fetch Energy Data
+
+# ⚠️ DISABLED: Not ready for production
+# Data validation is in progress - see DATA_VALIDATION.md
+# To enable: uncomment the 'schedule' section below
+
+on:
+  # schedule:
+  #   # Runs at 00:30 JST (15:30 UTC) every day
+  #   - cron: '30 15 * * *'
+
+  # Manual trigger only (for testing)
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Date to fetch (YYYY-MM-DD), leave empty for today'
+        required: false
+        type: string
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          go mod download
+          go mod tidy
+
+      - name: Build fetch binaries
+        working-directory: ./backend
+        run: |
+          echo "🔨 Building fetch binaries..."
+          go build -o fetch-demand cmd/fetch-demand-http/main.go
+          go build -o fetch-jepx cmd/fetch-jepx-http/main.go
+          go build -o fetch-reserve cmd/fetch-reserve-http/main.go
+          chmod +x fetch-*
+
+      - name: Determine target date
+        id: date
+        run: |
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            TARGET_DATE="${{ github.event.inputs.date }}"
+          else
+            # Calculate JST date (UTC + 9 hours)
+            TARGET_DATE=$(TZ='Asia/Tokyo' date +%Y-%m-%d)
+          fi
+          echo "target_date=$TARGET_DATE" >> $GITHUB_OUTPUT
+          echo "📅 Target date: $TARGET_DATE"
+
+      - name: Create data directories
+        run: |
+          mkdir -p frontend/public/data/jp/tokyo
+          mkdir -p frontend/public/data/jp/kansai
+          mkdir -p frontend/public/data/jp/jepx
+          mkdir -p frontend/public/data/jp/system
+
+      - name: Fetch Tokyo demand data
+        working-directory: ./backend
+        run: |
+          echo "📊 Fetching Tokyo demand data..."
+          ./fetch-demand \
+            -area tokyo \
+            -date ${{ steps.date.outputs.target_date }} \
+            --use-http \
+            -output ../frontend/public/data/jp/tokyo/demand-${{ steps.date.outputs.target_date }}.json \
+            || echo "⚠️  Tokyo fetch failed (may not be available yet)"
+
+      - name: Fetch Kansai demand data
+        working-directory: ./backend
+        run: |
+          echo "📊 Fetching Kansai demand data..."
+          ./fetch-demand \
+            -area kansai \
+            -date ${{ steps.date.outputs.target_date }} \
+            --use-http \
+            -output ../frontend/public/data/jp/kansai/demand-${{ steps.date.outputs.target_date }}.json \
+            || echo "⚠️  Kansai fetch failed (may not be available yet)"
+
+      - name: Fetch JEPX Tokyo spot prices
+        working-directory: ./backend
+        run: |
+          echo "💴 Fetching JEPX Tokyo spot prices..."
+          ./fetch-jepx \
+            -area tokyo \
+            -date ${{ steps.date.outputs.target_date }} \
+            --use-http \
+            -output ../frontend/public/data/jp/jepx/spot-tokyo-${{ steps.date.outputs.target_date }}.json \
+            || echo "⚠️  JEPX Tokyo fetch failed (may not be available yet)"
+
+      - name: Fetch JEPX Kansai spot prices
+        working-directory: ./backend
+        run: |
+          echo "💴 Fetching JEPX Kansai spot prices..."
+          ./fetch-jepx \
+            -area kansai \
+            -date ${{ steps.date.outputs.target_date }} \
+            --use-http \
+            -output ../frontend/public/data/jp/jepx/spot-kansai-${{ steps.date.outputs.target_date }}.json \
+            || echo "⚠️  JEPX Kansai fetch failed (may not be available yet)"
+
+      - name: Fetch reserve capacity data
+        working-directory: ./backend
+        run: |
+          echo "🔋 Fetching reserve capacity data..."
+          ./fetch-reserve \
+            -date ${{ steps.date.outputs.target_date }} \
+            -output ../frontend/public/data/jp/system/reserve-${{ steps.date.outputs.target_date }}.json \
+            || echo "⚠️  Reserve fetch failed (may not be available yet)"
+
+      - name: List fetched files
+        run: |
+          echo "📁 Fetched files:"
+          find frontend/public/data/jp -name "*.json" -type f -mtime -1 -exec ls -lh {} \;
+
+      - name: Commit data to repository
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          git add frontend/public/data/jp/
+
+          # Check if there are changes
+          if git diff --staged --quiet; then
+            echo "📭 No new data to commit"
+          else
+            git commit -m "📊 Update energy data for ${{ steps.date.outputs.target_date }}"
+            git push
+            echo "✅ Data committed and pushed"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### 📊 Data Fetch Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** ${{ steps.date.outputs.target_date }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Files updated:**" >> $GITHUB_STEP_SUMMARY
+          find frontend/public/data/jp -name "*${{ steps.date.outputs.target_date }}*.json" -type f 2>/dev/null | while read file; do
+            size=$(ls -lh "$file" | awk '{print $5}')
+            echo "- \`$file\` ($size)" >> $GITHUB_STEP_SUMMARY
+          done || echo "- No files found" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 Vercel will auto-deploy with updated data" >> $GITHUB_STEP_SUMMARY
