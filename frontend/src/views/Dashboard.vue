@@ -203,9 +203,9 @@ watch(() => demandStore.tokyoData, () => {
 
     <!-- Content -->
     <div v-else class="space-y-8">
-      <!-- Demand Charts Grid -->
+      <!-- Tokyo Row: Demand + Weather -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Tokyo -->
+        <!-- Tokyo Demand -->
         <BaseCard>
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Tokyo Demand (TEPCO)</h2>
@@ -273,8 +273,17 @@ watch(() => demandStore.tokyoData, () => {
         </div>
       </BaseCard>
 
-      <!-- Kansai -->
-      <BaseCard>
+        <!-- Tokyo Weather -->
+        <BaseCard>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Solar Forecast - Tokyo</h2>
+          <WeatherPanel area="tokyo" />
+        </BaseCard>
+      </div>
+
+      <!-- Kansai Row: Demand + Weather -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Kansai Demand -->
+        <BaseCard>
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Kansai Demand</h2>
           <ReserveBadge v-if="flags.isReserveEnabled" area="kansai" :data="reserveStore.reserveForArea('kansai')" />
@@ -340,6 +349,12 @@ watch(() => demandStore.tokyoData, () => {
           </div>
         </div>
       </BaseCard>
+
+        <!-- Kansai Weather -->
+        <BaseCard>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Solar Forecast - Kansai</h2>
+          <WeatherPanel area="kansai" />
+        </BaseCard>
       </div>
 
       <!-- Insights & Settlement Grid -->
@@ -374,26 +389,6 @@ watch(() => demandStore.tokyoData, () => {
             <!-- Analytics (1 column) -->
             <BaseCard>
               <ComparisonAnalytics />
-            </BaseCard>
-          </div>
-        </div>
-      </div>
-
-      <!-- Weather & Solar Forecast -->
-      <div class="space-y-6">
-        <div class="border-t border-gray-200 dark:border-gray-700 pt-8">
-          <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Weather & Solar Forecast</h2>
-
-          <!-- Solar Panels Grid -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Tokyo Solar -->
-            <BaseCard>
-              <WeatherPanel area="tokyo" />
-            </BaseCard>
-
-            <!-- Kansai Solar -->
-            <BaseCard>
-              <WeatherPanel area="kansai" />
             </BaseCard>
           </div>
         </div>
