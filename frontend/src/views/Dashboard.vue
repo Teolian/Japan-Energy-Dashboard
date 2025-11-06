@@ -24,7 +24,6 @@ import DataStatusIndicator from '@/components/dashboard/DataStatusIndicator.vue'
 import PriceHeatmap from '@/components/comparison/PriceHeatmap.vue'
 import ComparisonChart from '@/components/comparison/ComparisonChart.vue'
 import ComparisonAnalytics from '@/components/comparison/ComparisonAnalytics.vue'
-import RefreshButton from '@/components/common/RefreshButton.vue'
 import DataModeToggle from '@/components/common/DataModeToggle.vue'
 import WeatherPanel from '@/components/weather/WeatherPanel.vue'
 import { Moon, Sun, ChevronLeft, ChevronRight, Download } from 'lucide-vue-next'
@@ -140,7 +139,7 @@ watch(() => demandStore.tokyoData, () => {
             Japan Energy Dashboard
           </h1>
           <p class="text-gray-600 dark:text-gray-400 mt-2">
-            Real-time demand data visualization
+            📊 Auto-updated daily at 00:30 JST with latest data
           </p>
         </div>
         <div class="flex items-center gap-3">
@@ -154,7 +153,7 @@ watch(() => demandStore.tokyoData, () => {
 
       <!-- Date Navigation & Actions -->
       <div class="flex items-center justify-between mt-6 gap-4">
-        <!-- Center: Date Navigation + Refresh -->
+        <!-- Center: Date Navigation -->
         <div class="flex-1 flex items-center justify-center gap-4">
           <BaseButton size="sm" @click="demandStore.prevDay">
             <ChevronLeft :size="16" />
@@ -165,9 +164,6 @@ watch(() => demandStore.tokyoData, () => {
           <BaseButton size="sm" @click="demandStore.nextDay">
             <ChevronRight :size="16" />
           </BaseButton>
-
-          <!-- Refresh Button in center -->
-          <RefreshButton v-if="!demandStore.loading" />
         </div>
 
         <!-- Right: Export Button -->

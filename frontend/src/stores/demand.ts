@@ -10,9 +10,15 @@ export const useDemandStore = defineStore('demand', () => {
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  // Initialize date from localStorage or use default (2025-10-24)
+  // Initialize date from localStorage or use default (yesterday)
+  const getYesterday = (): string => {
+    const date = new Date()
+    date.setDate(date.getDate() - 1)
+    const isoString = date.toISOString().split('T')[0]
+    return isoString!  // Always has date part
+  }
   const savedDate = localStorage.getItem('jp-energy-last-date')
-  const currentDate = ref(savedDate || '2025-10-24')
+  const currentDate = ref<string>(savedDate || getYesterday())
 
   // Previous day metrics for trend comparison
   const prevTokyoMetrics = ref<DemandMetrics | null>(null)
