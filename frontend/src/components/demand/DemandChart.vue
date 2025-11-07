@@ -30,37 +30,45 @@ const chartData = computed(() => {
   const peakValue = Math.max(...actualValues)
   const peakIndex = actualValues.indexOf(peakValue)
 
-  // Create point styles array - highlight peak hour
+  // Create point styles array - highlight peak hour only (professional style)
   const pointBackgroundColors = actualValues.map((_, i) =>
-    i === peakIndex ? 'rgb(239, 68, 68)' : 'rgb(14, 165, 233)'
+    i === peakIndex ? 'rgb(220, 38, 38)' : 'transparent'
   )
   const pointBorderColors = actualValues.map((_, i) =>
-    i === peakIndex ? 'rgb(220, 38, 38)' : 'rgb(14, 165, 233)'
+    i === peakIndex ? 'rgb(220, 38, 38)' : 'transparent'
   )
-  const pointRadii = actualValues.map((_, i) => i === peakIndex ? 6 : 3)
+  const pointRadii = actualValues.map((_, i) => i === peakIndex ? 5 : 0) // Only peak visible
 
   const datasets = [
     {
       label: 'Actual Demand',
       data: props.data.map(d => d.actual),
-      borderColor: 'rgb(14, 165, 233)',
-      backgroundColor: 'rgba(14, 165, 233, 0.1)',
-      borderWidth: 2,
-      tension: 0.4,
-      yAxisID: 'y', // Left axis (MW)
+      borderColor: 'rgb(0, 102, 204)',      // Professional blue
+      backgroundColor: 'transparent',        // No fill
+      borderWidth: 2.5,                      // Thicker line
+      tension: 0,                            // Straight lines (professional)
+      yAxisID: 'y',
       pointBackgroundColor: pointBackgroundColors,
       pointBorderColor: pointBorderColors,
-      pointRadius: pointRadii,
-      pointHoverRadius: pointRadii.map(r => r + 2)
+      pointRadius: pointRadii,               // Show peak point only
+      pointHoverRadius: pointRadii.map(r => r + 3),
+      pointHoverBorderColor: '#fff',
+      pointHoverBorderWidth: 2
     },
     {
       label: 'Forecast',
       data: props.data.map(d => d.forecast || null),
-      borderColor: 'rgb(147, 51, 234)',
+      borderColor: 'rgb(107, 114, 128)',    // Gray (professional)
+      backgroundColor: 'transparent',
       borderWidth: 2,
-      borderDash: [5, 5],
-      tension: 0.4,
-      yAxisID: 'y' // Left axis (MW)
+      borderDash: [8, 4],                    // Longer dashes
+      tension: 0,
+      yAxisID: 'y',
+      pointRadius: 0,
+      pointHoverRadius: 5,
+      pointHoverBackgroundColor: 'rgb(107, 114, 128)',
+      pointHoverBorderColor: '#fff',
+      pointHoverBorderWidth: 2
     }
   ]
 
@@ -69,11 +77,16 @@ const chartData = computed(() => {
     datasets.push({
       label: 'Spot Price',
       data: props.prices,
-      borderColor: 'rgb(251, 146, 60)', // Orange
-      backgroundColor: 'rgba(251, 146, 60, 0.1)',
-      borderWidth: 2,
-      tension: 0.4,
-      yAxisID: 'y1' // Right axis (JPY/kWh)
+      borderColor: 'rgb(220, 38, 38)',      // Red (financial alert color)
+      backgroundColor: 'transparent',
+      borderWidth: 2.5,
+      tension: 0,
+      yAxisID: 'y1',
+      pointRadius: 0,
+      pointHoverRadius: 5,
+      pointHoverBackgroundColor: 'rgb(220, 38, 38)',
+      pointHoverBorderColor: '#fff',
+      pointHoverBorderWidth: 2
     } as any)
   }
 
@@ -142,6 +155,20 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
     }
   },
   scales: {
+    x: {
+      grid: {
+        display: true,
+        drawBorder: true,
+        color: 'rgba(0, 0, 0, 0.06)',
+        lineWidth: 1
+      },
+      ticks: {
+        font: {
+          size: 11,
+          family: 'ui-monospace, monospace'  // Professional monospace
+        }
+      }
+    },
     y: {
       type: 'linear',
       display: true,
@@ -149,9 +176,25 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
       beginAtZero: false,
       title: {
         display: true,
-        text: 'Demand (MW)'
+        text: 'Demand (MW)',
+        font: {
+          size: 12,
+          weight: 'bold' as const
+        }
       },
-      ticks: { callback: (value) => `${value} MW` }
+      grid: {
+        display: true,
+        drawBorder: true,
+        color: 'rgba(0, 0, 0, 0.06)',
+        lineWidth: 1
+      },
+      ticks: {
+        callback: (value) => `${value.toLocaleString()}`,
+        font: {
+          size: 11,
+          family: 'ui-monospace, monospace'
+        }
+      }
     },
     ...(props.prices && props.prices.length > 0 ? {
       y1: {
@@ -161,9 +204,19 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
         beginAtZero: false,
         title: {
           display: true,
-          text: 'Price (JPY/kWh)'
+          text: 'Price (JPY/kWh)',
+          font: {
+            size: 12,
+            weight: 'bold' as const
+          }
         },
-        ticks: { callback: (value: any) => `¥${value}` },
+        ticks: {
+          callback: (value: any) => `¥${value.toLocaleString()}`,
+          font: {
+            size: 11,
+            family: 'ui-monospace, monospace'
+          }
+        },
         grid: {
           drawOnChartArea: false // Don't draw gridlines for right axis
         }

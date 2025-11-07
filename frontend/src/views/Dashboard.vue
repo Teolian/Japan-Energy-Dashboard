@@ -24,6 +24,7 @@ import DataStatusIndicator from '@/components/dashboard/DataStatusIndicator.vue'
 import PriceHeatmap from '@/components/comparison/PriceHeatmap.vue'
 import ComparisonChart from '@/components/comparison/ComparisonChart.vue'
 import ComparisonAnalytics from '@/components/comparison/ComparisonAnalytics.vue'
+import PriceSpreadChart from '@/components/comparison/PriceSpreadChart.vue'
 import DataModeToggle from '@/components/common/DataModeToggle.vue'
 import WeatherPanel from '@/components/weather/WeatherPanel.vue'
 import { Moon, Sun, ChevronLeft, ChevronRight, Download } from 'lucide-vue-next'
@@ -354,6 +355,13 @@ watch(() => demandStore.tokyoData, () => {
         <BaseCard>
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Solar Forecast - Kansai</h2>
           <WeatherPanel area="kansai" />
+        </BaseCard>
+      </div>
+
+      <!-- Price Spread Analysis -->
+      <div v-if="flags.isJEPXEnabled" class="w-full">
+        <BaseCard>
+          <PriceSpreadChart />
         </BaseCard>
       </div>
 
