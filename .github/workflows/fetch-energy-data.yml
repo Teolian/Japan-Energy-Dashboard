@@ -83,16 +83,16 @@ jobs:
             -output ../frontend/public/data/jp/tokyo/demand-${{ steps.date.outputs.target_date }}.json \
             || echo "⚠️  Tokyo fetch failed (may not be available yet)"
 
-      - name: Fetch Kansai demand data
+      - name: Fetch Kansai demand data (via OCCTO)
         working-directory: ./backend
         run: |
-          echo "📊 Fetching Kansai demand data..."
+          echo "📊 Fetching Kansai demand data from OCCTO..."
           ./fetch-demand \
             -area kansai \
             -date ${{ steps.date.outputs.target_date }} \
             --use-http \
             -output ../frontend/public/data/jp/kansai/demand-${{ steps.date.outputs.target_date }}.json \
-            || echo "⚠️  Kansai fetch failed (may not be available yet)"
+            || echo "⚠️  Kansai fetch failed"
 
       - name: Fetch JEPX Tokyo spot prices
         working-directory: ./backend

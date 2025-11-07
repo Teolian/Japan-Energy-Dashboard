@@ -82,10 +82,17 @@ func main() {
 
 			reader, err = fetcher.FetchFromZip(url, dayFile)
 		} else {
-			url = cfg.Kansai.URL
-			sourceName = cfg.Kansai.Name
+			// Kansai: Use OCCTO API (jhSybt=02 provides 30-minute interval demand data)
+			// OCCTO provides demand data for all 10 regions including Kansai
+			parsedDate, _ := timeutil.ParseDate(date)
+			dateFormatted := parsedDate.Format("2006/01/02") // YYYY/MM/DD
+			url = fmt.Sprintf(
+				"https://web-kohyo.occto.or.jp/kks-web-public/download/downloadCsv?jhSybt=02&tgtYmdFrom=%s&tgtYmdTo=%s",
+				dateFormatted, dateFormatted,
+			)
+			sourceName = "OCCTO"
 
-			lgr.Info(fmt.Sprintf("Attempting HTTP fetch from %s", url))
+			lgr.Info(fmt.Sprintf("Attempting to fetch Kansai demand from OCCTO: %s", url))
 
 			reader, err = fetcher.Fetch(url)
 		}
@@ -133,8 +140,15 @@ func main() {
 		adapter := adapters.NewTEPCOAdapter()
 		resp, err = adapter.ParseCSV(reader, date)
 	case "kansai":
-		adapter := adapters.NewKansaiAdapter()
-		resp, err = adapter.ParseCSV(reader, date)
+		if useHTTP && sourceName == "OCCTO" {
+			// Use OCCTO adapter for Kansai when fetching from OCCTO
+			adapter := adapters.NewOCCTOAdapter()
+			resp, err = adapter.ParseDemandCSV(reader, date, demand.AreaKansai)
+		} else {
+			// Use Kansai adapter for testdata
+			adapter := adapters.NewKansaiAdapter()
+			resp, err = adapter.ParseCSV(reader, date)
+		}
 	}
 
 	parseDuration := time.Since(parseStart)

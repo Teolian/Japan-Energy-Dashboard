@@ -7,7 +7,9 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"time"
 
+	"github.com/teo/aversome/backend/internal/demand"
 	"github.com/teo/aversome/backend/internal/reserve"
 )
 
@@ -160,6 +162,161 @@ func (a *OCCTOAdapter) ParseCSV(reader io.Reader, date string) (*reserve.Respons
 	}
 
 	return resp, nil
+}
+
+// ParseDemandCSV parses OCCTO CSV data into demand.Response for a specific area.
+// Uses the same CSV format as ParseCSV but extracts hourly demand time-series.
+// Aggregates 30-minute intervals into hourly averages.
+func (a *OCCTOAdapter) ParseDemandCSV(reader io.Reader, date string, targetArea demand.Area) (*demand.Response, error) {
+	csvReader := csv.NewReader(reader)
+	csvReader.TrimLeadingSpace = true
+	csvReader.LazyQuotes = true
+	csvReader.FieldsPerRecord = -1
+
+	// Skip first line (UPDATE timestamp)
+	_, err := csvReader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read first line: %w", err)
+	}
+
+	// Read header
+	header, err := csvReader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read CSV header: %w", err)
+	}
+
+	// Auto-detect column indices (including time)
+	colIndices := a.detectDemandColumns(header)
+	if colIndices["date"] == -1 || colIndices["time"] == -1 || colIndices["area"] == -1 || colIndices["demand"] == -1 {
+		return nil, fmt.Errorf("required columns not found in header: %v", header)
+	}
+
+	resp := demand.NewResponse(targetArea, date)
+	resp.Source = demand.Source{
+		Name: "OCCTO",
+		URL:  a.sourceURL,
+	}
+
+	// Normalize date format (2025-11-03 → 2025/11/03)
+	normalizedDate := strings.ReplaceAll(date, "-", "/")
+
+	// Aggregate 30-minute intervals into hourly data
+	hourlyData := make(map[int]struct {
+		demandSum float64
+		count     int
+	})
+
+	lineNum := 1
+	for {
+		record, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error reading CSV line %d: %w", lineNum, err)
+		}
+		lineNum++
+
+		// Extract date
+		rowDate := strings.TrimSpace(record[colIndices["date"]])
+		if rowDate != normalizedDate && rowDate != date {
+			continue
+		}
+
+		// Extract area
+		areaStr := strings.TrimSpace(record[colIndices["area"]])
+		area := a.normalizeArea(areaStr)
+
+		// Only process the target area
+		if string(targetArea) != area {
+			continue
+		}
+
+		// Extract time (format: "00:30", "01:00", etc.)
+		timeStr := strings.TrimSpace(record[colIndices["time"]])
+
+		// Parse hour from time
+		timeParts := strings.Split(timeStr, ":")
+		if len(timeParts) < 1 {
+			continue
+		}
+		hour, err := strconv.Atoi(timeParts[0])
+		if err != nil {
+			continue
+		}
+
+		// Parse demand (MW)
+		demandStr := strings.TrimSpace(record[colIndices["demand"]])
+		demandVal, err := strconv.ParseFloat(demandStr, 64)
+		if err != nil {
+			continue
+		}
+
+		// Aggregate into hourly buckets
+		data := hourlyData[hour]
+		data.demandSum += demandVal
+		data.count++
+		hourlyData[hour] = data
+	}
+
+	// Convert aggregated data to SeriesPoints
+	location, _ := time.LoadLocation("Asia/Tokyo")
+	baseDate, _ := time.Parse("2006-01-02", date)
+
+	for hour := 0; hour < 24; hour++ {
+		data, exists := hourlyData[hour]
+		if !exists || data.count == 0 {
+			continue
+		}
+
+		avgDemand := data.demandSum / float64(data.count)
+
+		timestamp := time.Date(
+			baseDate.Year(), baseDate.Month(), baseDate.Day(),
+			hour, 0, 0, 0, location,
+		)
+
+		point := demand.SeriesPoint{
+			Timestamp:  timestamp,
+			DemandMW:   avgDemand,
+			ForecastMW: nil, // OCCTO doesn't provide forecasts
+		}
+		resp.Series = append(resp.Series, point)
+	}
+
+	// Validate we have data
+	if len(resp.Series) == 0 {
+		return nil, fmt.Errorf("no demand data found for area %s on date %s", targetArea, date)
+	}
+
+	return resp, nil
+}
+
+// detectDemandColumns finds column indices for demand parsing (includes time).
+func (a *OCCTOAdapter) detectDemandColumns(header []string) map[string]int {
+	indices := map[string]int{
+		"date":   -1,
+		"time":   -1,
+		"area":   -1,
+		"demand": -1,
+	}
+
+	for i, col := range header {
+		colTrimmed := strings.TrimSpace(col)
+
+		switch {
+		case strings.Contains(colTrimmed, "対象年月日"):
+			indices["date"] = i
+		case strings.Contains(colTrimmed, "時刻") || colTrimmed == "対象時刻":
+			indices["time"] = i
+		case colTrimmed == "エリア名":
+			indices["area"] = i
+		case colTrimmed == "エリア需要(MW)":
+			indices["demand"] = i
+		}
+	}
+
+	return indices
 }
 
 // detectColumns finds column indices by header names.
