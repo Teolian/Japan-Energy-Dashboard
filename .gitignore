@@ -56,3 +56,6 @@ coverage/
 # Claude and Playwright
 .claude/
 .playwright/
+
+# Private planning documents
+BUSINESS_ROADMAP.md
