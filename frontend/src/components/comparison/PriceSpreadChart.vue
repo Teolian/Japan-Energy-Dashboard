@@ -66,8 +66,57 @@ const minSpread = computed(() => {
   return { value: Math.round(min.spread * 10) / 10, time: min.time }
 })
 
+// Volatility (standard deviation)
+const spreadVolatility = computed(() => {
+  if (spreadData.value.length === 0) return 0
+  const avg = avgSpread.value
+  const variance = spreadData.value.reduce((acc, d) => acc + Math.pow(d.spread - avg, 2), 0) / spreadData.value.length
+  return Math.round(Math.sqrt(variance) * 10) / 10
+})
+
 // Arbitrage detection
 const hasArbitrage = computed(() => Math.abs(maxSpread.value.value) > 5 || Math.abs(minSpread.value.value) > 5)
+
+// Trading signals
+const tradingSignals = computed(() => {
+  if (spreadData.value.length === 0) return []
+
+  const signals = []
+  const threshold = 3 // ¥3/kWh threshold for trading signal
+
+  for (const point of spreadData.value) {
+    if (point.spread > threshold) {
+      signals.push({
+        time: point.time,
+        type: 'buy-kansai',
+        spread: point.spread,
+        message: `Buy Kansai, Sell Tokyo (spread: +¥${point.spread})`
+      })
+    } else if (point.spread < -threshold) {
+      signals.push({
+        time: point.time,
+        type: 'buy-tokyo',
+        spread: point.spread,
+        message: `Buy Tokyo, Sell Kansai (spread: ¥${point.spread})`
+      })
+    }
+  }
+
+  return signals
+})
+
+// Arbitrage ROI calculation (per 100 MWh)
+const arbitrageROI = computed(() => {
+  if (!hasArbitrage.value) return 0
+
+  const capacityMWh = 100
+  const bestSpread = Math.max(Math.abs(maxSpread.value.value), Math.abs(minSpread.value.value))
+
+  // Profit = capacity * price_spread * 1000 (convert MWh to kWh)
+  const profit = capacityMWh * bestSpread * 1000
+
+  return Math.round(profit)
+})
 
 const chartData = computed(() => {
   const spreads = spreadData.value.map(d => d.spread)
@@ -219,7 +268,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
     </div>
 
     <!-- Metrics -->
-    <div class="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+    <div class="grid grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
       <div>
         <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Average Spread</div>
         <div class="text-2xl font-bold" :class="avgSpread >= 0 ? 'text-red-600' : 'text-green-600'">
@@ -229,55 +278,86 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
       </div>
 
       <div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Max Spread ({{ maxSpread.time }})</div>
-        <div class="text-2xl font-bold text-red-600">
-          +¥{{ maxSpread.value }}
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Volatility (σ)</div>
+        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+          ¥{{ spreadVolatility }}
         </div>
-        <div v-if="maxSpread.value > 5" class="text-xs text-red-600 font-medium">
-          ⚡ Arbitrage opportunity
-        </div>
-        <div v-else class="text-xs text-gray-500">
-          Tokyo peak
+        <div class="text-xs" :class="spreadVolatility > 3 ? 'text-orange-600' : 'text-gray-500'">
+          {{ spreadVolatility > 3 ? 'High volatility' : 'Low volatility' }}
         </div>
       </div>
 
       <div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Min Spread ({{ minSpread.time }})</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Max Spread</div>
+        <div class="text-2xl font-bold text-red-600">
+          +¥{{ maxSpread.value }}
+        </div>
+        <div class="text-xs text-gray-500">
+          at {{ maxSpread.time }}
+        </div>
+      </div>
+
+      <div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Min Spread</div>
         <div class="text-2xl font-bold text-green-600">
           {{ minSpread.value }}
         </div>
-        <div v-if="Math.abs(minSpread.value) > 5" class="text-xs text-green-600 font-medium">
-          ⚡ Reverse arbitrage
-        </div>
-        <div v-else class="text-xs text-gray-500">
-          Kansai peak
+        <div class="text-xs text-gray-500">
+          at {{ minSpread.time }}
         </div>
       </div>
     </div>
 
-    <!-- Insights -->
-    <div v-if="hasArbitrage" class="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-      <div class="flex items-start gap-2">
-        <span class="text-amber-600 dark:text-amber-400">💡</span>
+    <!-- Arbitrage ROI -->
+    <div v-if="hasArbitrage" class="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+      <div class="flex items-start justify-between">
         <div>
-          <div class="font-medium text-amber-900 dark:text-amber-100 text-sm">Arbitrage Opportunity Detected</div>
-          <div class="text-sm text-amber-700 dark:text-amber-300 mt-1">
-            <span v-if="maxSpread.value > 5">
-              Tokyo is +¥{{ maxSpread.value }}/kWh more expensive at {{ maxSpread.time }}.
-              Consider buying from Kansai and selling to Tokyo region.
+          <div class="text-sm font-medium text-purple-900 dark:text-purple-100">
+            Arbitrage ROI (100 MWh capacity)
+          </div>
+          <div class="mt-1 text-xs text-purple-700 dark:text-purple-300">
+            <span v-if="maxSpread.value > Math.abs(minSpread.value)">
+              Buy Kansai @ {{ maxSpread.time }}, Sell Tokyo
             </span>
-            <span v-else-if="Math.abs(minSpread.value) > 5">
-              Kansai is ¥{{ Math.abs(minSpread.value) }}/kWh more expensive at {{ minSpread.time }}.
-              Consider reverse arbitrage strategy.
+            <span v-else>
+              Buy Tokyo @ {{ minSpread.time }}, Sell Kansai
             </span>
           </div>
         </div>
+        <div class="text-right">
+          <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+            ¥{{ arbitrageROI.toLocaleString() }}
+          </div>
+          <div class="text-xs text-purple-600 dark:text-purple-400">per cycle</div>
+        </div>
       </div>
     </div>
 
-    <div v-else class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+    <!-- Trading Signals -->
+    <div v-if="tradingSignals.length > 0" class="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+      <div class="font-medium text-amber-900 dark:text-amber-100 text-sm mb-2">
+        ⚡ Trading Signals ({{ tradingSignals.length }} opportunities)
+      </div>
+      <div class="space-y-1 max-h-32 overflow-y-auto">
+        <div
+          v-for="(signal, idx) in tradingSignals.slice(0, 5)"
+          :key="idx"
+          class="text-xs text-amber-700 dark:text-amber-300 flex items-center gap-2"
+        >
+          <span class="font-mono">{{ signal.time }}</span>
+          <span>→</span>
+          <span>{{ signal.message }}</span>
+        </div>
+        <div v-if="tradingSignals.length > 5" class="text-xs text-amber-600 dark:text-amber-400 italic">
+          +{{ tradingSignals.length - 5 }} more signals...
+        </div>
+      </div>
+    </div>
+
+    <!-- No Arbitrage -->
+    <div v-if="!hasArbitrage && tradingSignals.length === 0" class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
       <div class="text-sm text-gray-600 dark:text-gray-400">
-        💡 Price spread is within normal range (±¥5). No significant arbitrage opportunities detected today.
+        💡 Price spread is within normal range. No significant arbitrage opportunities detected today.
       </div>
     </div>
   </div>
