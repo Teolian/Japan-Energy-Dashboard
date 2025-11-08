@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/teo/aversome/backend/internal/demand"
+	"github.com/teo/aversome/backend/internal/generation"
 	"github.com/teo/aversome/backend/internal/reserve"
 )
 
@@ -368,4 +369,215 @@ func (a *OCCTOAdapter) normalizeArea(areaStr string) string {
 		// Return as-is for other areas (future expansion)
 		return areaStr
 	}
+}
+
+// ParseGenerationMixCSV parses OCCTO jhSybt=03 CSV data into generation.Response.
+// CSV format: generation capacity breakdown by fuel type (solar, wind, nuclear, LNG, coal, hydro).
+// Similar structure to demand CSV with 30-minute intervals, aggregated to hourly.
+func (a *OCCTOAdapter) ParseGenerationMixCSV(reader io.Reader, date string, targetArea string) (*generation.Response, error) {
+	csvReader := csv.NewReader(reader)
+	csvReader.TrimLeadingSpace = true
+	csvReader.LazyQuotes = true
+	csvReader.FieldsPerRecord = -1
+
+	// Skip first line (UPDATE timestamp)
+	_, err := csvReader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read first line: %w", err)
+	}
+
+	// Read header
+	header, err := csvReader.Read()
+	if err != nil {
+		return nil, fmt.Errorf("failed to read CSV header: %w", err)
+	}
+
+	// Auto-detect column indices for generation mix
+	colIndices := a.detectGenerationColumns(header)
+	if colIndices["date"] == -1 || colIndices["time"] == -1 || colIndices["area"] == -1 {
+		return nil, fmt.Errorf("required columns not found in header: %v", header)
+	}
+
+	resp := generation.NewResponse(targetArea, date)
+	resp.Source = generation.Source{
+		Name: "OCCTO",
+		URL:  a.sourceURL,
+	}
+
+	// Normalize date format (2025-11-03 → 2025/11/03)
+	normalizedDate := strings.ReplaceAll(date, "-", "/")
+
+	// Aggregate 30-minute intervals into hourly data
+	hourlyData := make(map[int]struct {
+		solar   float64
+		wind    float64
+		hydro   float64
+		nuclear float64
+		lng     float64
+		coal    float64
+		other   float64
+		count   int
+	})
+
+	lineNum := 1
+	for {
+		record, err := csvReader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, fmt.Errorf("error reading CSV line %d: %w", lineNum, err)
+		}
+		lineNum++
+
+		// Extract date
+		rowDate := strings.TrimSpace(record[colIndices["date"]])
+		if rowDate != normalizedDate && rowDate != date {
+			continue
+		}
+
+		// Extract area
+		areaStr := strings.TrimSpace(record[colIndices["area"]])
+		area := a.normalizeArea(areaStr)
+
+		// Only process the target area
+		if targetArea != area {
+			continue
+		}
+
+		// Extract time (format: "00:30", "01:00", etc.)
+		timeStr := strings.TrimSpace(record[colIndices["time"]])
+		timeParts := strings.Split(timeStr, ":")
+		if len(timeParts) < 1 {
+			continue
+		}
+		hour, err := strconv.Atoi(timeParts[0])
+		if err != nil {
+			continue
+		}
+
+		// Parse generation values (MW) for each fuel type
+		data := hourlyData[hour]
+
+		if idx := colIndices["solar"]; idx != -1 {
+			val, _ := strconv.ParseFloat(strings.TrimSpace(record[idx]), 64)
+			data.solar += val
+		}
+		if idx := colIndices["wind"]; idx != -1 {
+			val, _ := strconv.ParseFloat(strings.TrimSpace(record[idx]), 64)
+			data.wind += val
+		}
+		if idx := colIndices["hydro"]; idx != -1 {
+			val, _ := strconv.ParseFloat(strings.TrimSpace(record[idx]), 64)
+			data.hydro += val
+		}
+		if idx := colIndices["nuclear"]; idx != -1 {
+			val, _ := strconv.ParseFloat(strings.TrimSpace(record[idx]), 64)
+			data.nuclear += val
+		}
+		if idx := colIndices["lng"]; idx != -1 {
+			val, _ := strconv.ParseFloat(strings.TrimSpace(record[idx]), 64)
+			data.lng += val
+		}
+		if idx := colIndices["coal"]; idx != -1 {
+			val, _ := strconv.ParseFloat(strings.TrimSpace(record[idx]), 64)
+			data.coal += val
+		}
+		if idx := colIndices["other"]; idx != -1 {
+			val, _ := strconv.ParseFloat(strings.TrimSpace(record[idx]), 64)
+			data.other += val
+		}
+
+		data.count++
+		hourlyData[hour] = data
+	}
+
+	// Convert aggregated data to GenerationPoints
+	location, _ := time.LoadLocation("Asia/Tokyo")
+	baseDate, _ := time.Parse("2006-01-02", date)
+
+	for hour := 0; hour < 24; hour++ {
+		data, exists := hourlyData[hour]
+		if !exists || data.count == 0 {
+			continue
+		}
+
+		count := float64(data.count)
+		timestamp := time.Date(
+			baseDate.Year(), baseDate.Month(), baseDate.Day(),
+			hour, 0, 0, 0, location,
+		)
+
+		point := generation.GenerationPoint{
+			Timestamp: timestamp,
+			SolarMW:   data.solar / count,
+			WindMW:    data.wind / count,
+			HydroMW:   data.hydro / count,
+			NuclearMW: data.nuclear / count,
+			LNGMW:     data.lng / count,
+			CoalMW:    data.coal / count,
+			OtherMW:   data.other / count,
+		}
+		point.TotalMW = point.SolarMW + point.WindMW + point.HydroMW + point.NuclearMW + point.LNGMW + point.CoalMW + point.OtherMW
+
+		resp.Series = append(resp.Series, point)
+	}
+
+	// Validate we have data
+	if len(resp.Series) == 0 {
+		return nil, fmt.Errorf("no generation mix data found for area %s on date %s", targetArea, date)
+	}
+
+	// Calculate metadata
+	resp.CalculateMeta()
+
+	return resp, nil
+}
+
+// detectGenerationColumns finds column indices for generation mix parsing.
+// OCCTO jhSybt=03 column names (Japanese):
+// - 太陽光 (solar), 風力 (wind), 水力 (hydro), 原子力 (nuclear)
+// - 火力(LNG), 火力(石炭), その他
+func (a *OCCTOAdapter) detectGenerationColumns(header []string) map[string]int {
+	indices := map[string]int{
+		"date":    -1,
+		"time":    -1,
+		"area":    -1,
+		"solar":   -1,
+		"wind":    -1,
+		"hydro":   -1,
+		"nuclear": -1,
+		"lng":     -1,
+		"coal":    -1,
+		"other":   -1,
+	}
+
+	for i, col := range header {
+		colTrimmed := strings.TrimSpace(col)
+
+		switch {
+		case strings.Contains(colTrimmed, "対象年月日"):
+			indices["date"] = i
+		case strings.Contains(colTrimmed, "時刻") || colTrimmed == "対象時刻":
+			indices["time"] = i
+		case colTrimmed == "エリア名":
+			indices["area"] = i
+		case strings.Contains(colTrimmed, "太陽光"):
+			indices["solar"] = i
+		case strings.Contains(colTrimmed, "風力"):
+			indices["wind"] = i
+		case strings.Contains(colTrimmed, "水力"):
+			indices["hydro"] = i
+		case strings.Contains(colTrimmed, "原子力"):
+			indices["nuclear"] = i
+		case strings.Contains(colTrimmed, "火力") && strings.Contains(colTrimmed, "LNG"):
+			indices["lng"] = i
+		case strings.Contains(colTrimmed, "火力") && strings.Contains(colTrimmed, "石炭"):
+			indices["coal"] = i
+		case strings.Contains(colTrimmed, "その他"):
+			indices["other"] = i
+		}
+	}
+
+	return indices
 }

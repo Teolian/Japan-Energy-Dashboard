@@ -69,6 +69,7 @@ func main() {
 	router.GET("/api/demand/:area/:date", handleGetDemand)
 	router.GET("/api/jepx/:area/:date", handleGetJEPX)
 	router.GET("/api/reserve/:date", handleGetReserve)
+	router.GET("/api/generation/:area/:date", handleGetGeneration)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -340,6 +341,53 @@ func handleGetReserve(c *gin.Context) {
 			})
 			return
 		}
+	}
+
+	// Read and return file
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read data file"})
+		return
+	}
+
+	c.Data(http.StatusOK, "application/json", data)
+}
+
+// GET /api/generation/:area/:date - Retrieve estimated generation mix data
+func handleGetGeneration(c *gin.Context) {
+	area := c.Param("area")
+	date := c.Param("date")
+
+	// Validate area
+	if area != "tokyo" && area != "kansai" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid area. Must be 'tokyo' or 'kansai'"})
+		return
+	}
+
+	// Construct file path
+	filePath := filepath.Join("public", "data", "jp", area, fmt.Sprintf("generation-%s.json", date))
+
+	// Check if file exists
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		// File doesn't exist - estimate from demand + JEPX data
+		log.Printf("[GET /api/generation] File not found, estimating generation mix for %s/%s", area, date)
+
+		cmd := exec.Command(
+			"./estimate-generation",
+			"-area", area,
+			"-date", date,
+		)
+
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "Failed to estimate generation mix",
+				"details": fmt.Sprintf("%v: %s", err, string(output)),
+			})
+			return
+		}
+
+		log.Printf("[GET /api/generation] Successfully estimated generation mix for %s/%s", area, date)
 	}
 
 	// Read and return file
