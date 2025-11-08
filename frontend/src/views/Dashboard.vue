@@ -204,76 +204,8 @@ watch(() => demandStore.tokyoData, () => {
 
     <!-- Content -->
     <div v-else class="space-y-8">
-      <!-- Demand Row: Kansai + Tokyo -->
+      <!-- Demand Row: Tokyo + Kansai -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Kansai Demand -->
-        <BaseCard>
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Kansai Demand</h2>
-          <ReserveBadge v-if="flags.isReserveEnabled" area="kansai" :data="reserveStore.reserveForArea('kansai')" />
-        </div>
-        <DemandChart
-          title=""
-          :data="demandStore.kansaiChartData"
-          :prices="flags.isJEPXEnabled ? jepxStore.priceValues('kansai') : undefined"
-        />
-        <div v-if="demandStore.kansaiMetrics" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-3 gap-3">
-          <div>
-            <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <span>Peak</span>
-              <InfoIcon content="Highest demand value in the 24-hour period" />
-            </div>
-            <div class="flex items-center gap-1.5">
-              <div class="text-lg font-bold text-gray-900 dark:text-white">{{ demandStore.kansaiMetrics.peak.toFixed(0) }}</div>
-              <span class="text-xs text-gray-500">MW</span>
-              <TrendIndicator
-                v-if="demandStore.prevKansaiMetrics"
-                :current="demandStore.kansaiMetrics.peak"
-                :previous="demandStore.prevKansaiMetrics.peak"
-                format="percentage"
-                :size="12"
-              />
-            </div>
-            <Sparkline
-              v-if="kansaiSparklineData.length > 0"
-              :data="kansaiSparklineData"
-              :width="60"
-              :height="16"
-              color="rgb(16, 185, 129)"
-              fill-color="rgb(16, 185, 129)"
-              class="mt-1"
-            />
-          </div>
-          <div>
-            <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <span>Average</span>
-              <InfoIcon content="Mean demand across all 24 hours" />
-            </div>
-            <div class="flex items-center gap-1.5">
-              <div class="text-lg font-bold text-gray-900 dark:text-white">{{ demandStore.kansaiMetrics.average.toFixed(0) }}</div>
-              <span class="text-xs text-gray-500">MW</span>
-              <TrendIndicator
-                v-if="demandStore.prevKansaiMetrics"
-                :current="demandStore.kansaiMetrics.average"
-                :previous="demandStore.prevKansaiMetrics.average"
-                format="percentage"
-                :size="12"
-              />
-            </div>
-          </div>
-          <div v-if="demandStore.kansaiMetrics.forecastAccuracy">
-            <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <span>Accuracy</span>
-              <InfoIcon content="How closely the forecast matches actual demand" />
-            </div>
-            <div class="flex items-center gap-1.5">
-              <div class="text-lg font-bold text-gray-900 dark:text-white">{{ demandStore.kansaiMetrics.forecastAccuracy }}</div>
-              <span class="text-xs text-gray-500">%</span>
-            </div>
-          </div>
-        </div>
-      </BaseCard>
-
         <!-- Tokyo Demand -->
         <BaseCard>
         <div class="flex items-center justify-between mb-4">
@@ -341,20 +273,88 @@ watch(() => demandStore.tokyoData, () => {
           </div>
         </div>
       </BaseCard>
+
+        <!-- Kansai Demand -->
+        <BaseCard>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Kansai Demand</h2>
+          <ReserveBadge v-if="flags.isReserveEnabled" area="kansai" :data="reserveStore.reserveForArea('kansai')" />
+        </div>
+        <DemandChart
+          title=""
+          :data="demandStore.kansaiChartData"
+          :prices="flags.isJEPXEnabled ? jepxStore.priceValues('kansai') : undefined"
+        />
+        <div v-if="demandStore.kansaiMetrics" class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-3 gap-3">
+          <div>
+            <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <span>Peak</span>
+              <InfoIcon content="Highest demand value in the 24-hour period" />
+            </div>
+            <div class="flex items-center gap-1.5">
+              <div class="text-lg font-bold text-gray-900 dark:text-white">{{ demandStore.kansaiMetrics.peak.toFixed(0) }}</div>
+              <span class="text-xs text-gray-500">MW</span>
+              <TrendIndicator
+                v-if="demandStore.prevKansaiMetrics"
+                :current="demandStore.kansaiMetrics.peak"
+                :previous="demandStore.prevKansaiMetrics.peak"
+                format="percentage"
+                :size="12"
+              />
+            </div>
+            <Sparkline
+              v-if="kansaiSparklineData.length > 0"
+              :data="kansaiSparklineData"
+              :width="60"
+              :height="16"
+              color="rgb(16, 185, 129)"
+              fill-color="rgb(16, 185, 129)"
+              class="mt-1"
+            />
+          </div>
+          <div>
+            <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <span>Average</span>
+              <InfoIcon content="Mean demand across all 24 hours" />
+            </div>
+            <div class="flex items-center gap-1.5">
+              <div class="text-lg font-bold text-gray-900 dark:text-white">{{ demandStore.kansaiMetrics.average.toFixed(0) }}</div>
+              <span class="text-xs text-gray-500">MW</span>
+              <TrendIndicator
+                v-if="demandStore.prevKansaiMetrics"
+                :current="demandStore.kansaiMetrics.average"
+                :previous="demandStore.prevKansaiMetrics.average"
+                format="percentage"
+                :size="12"
+              />
+            </div>
+          </div>
+          <div v-if="demandStore.kansaiMetrics.forecastAccuracy">
+            <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <span>Accuracy</span>
+              <InfoIcon content="How closely the forecast matches actual demand" />
+            </div>
+            <div class="flex items-center gap-1.5">
+              <div class="text-lg font-bold text-gray-900 dark:text-white">{{ demandStore.kansaiMetrics.forecastAccuracy }}</div>
+              <span class="text-xs text-gray-500">%</span>
+            </div>
+          </div>
+        </div>
+      </BaseCard>
       </div>
 
-      <!-- Solar Forecast Row: Kansai + Tokyo -->
+      <!-- Solar Forecast Row: Tokyo + Kansai -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- Kansai Weather -->
-        <BaseCard>
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Solar Forecast - Kansai</h2>
-          <WeatherPanel area="kansai" />
-        </BaseCard>
-
         <!-- Tokyo Weather -->
         <BaseCard>
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Solar Forecast - Tokyo</h2>
           <WeatherPanel area="tokyo" />
+        </BaseCard>
+
+        <!-- Kansai Weather -->
+        <BaseCard>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Solar Forecast - Kansai</h2>
+          <WeatherPanel area="kansai" />
         </BaseCard>
       </div>
 
