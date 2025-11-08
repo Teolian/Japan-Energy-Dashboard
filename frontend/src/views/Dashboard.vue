@@ -27,6 +27,7 @@ import ComparisonAnalytics from '@/components/comparison/ComparisonAnalytics.vue
 import PriceSpreadChart from '@/components/comparison/PriceSpreadChart.vue'
 import DataModeToggle from '@/components/common/DataModeToggle.vue'
 import WeatherPanel from '@/components/weather/WeatherPanel.vue'
+import DuckCurveAnalysis from '@/components/dashboard/DuckCurveAnalysis.vue'
 import { Moon, Sun, ChevronLeft, ChevronRight, Download } from 'lucide-vue-next'
 import { demandToProfile } from '@/types/settlement'
 
@@ -362,6 +363,13 @@ watch(() => demandStore.tokyoData, () => {
       <div v-if="flags.isJEPXEnabled" class="w-full">
         <BaseCard>
           <PriceSpreadChart />
+        </BaseCard>
+      </div>
+
+      <!-- Duck Curve Analysis -->
+      <div v-if="flags.isJEPXEnabled" class="w-full">
+        <BaseCard>
+          <DuckCurveAnalysis />
         </BaseCard>
       </div>
 

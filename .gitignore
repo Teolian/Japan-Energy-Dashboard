@@ -59,3 +59,7 @@ coverage/
 
 # Private planning documents
 BUSINESS_ROADMAP.md
+BUSINESS_ROADMAP_2.md
+
+# Backend ephemeral data (Railway ephemeral storage)
+backend/public/data/
