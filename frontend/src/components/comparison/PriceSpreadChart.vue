@@ -30,7 +30,7 @@ const spreadData = computed(() => {
     const k = kansai[idx]
     if (!k) return null
 
-    const spread = t.price - k.price
+    const spread = Math.round((t.price - k.price) * 10) / 10
     return {
       ts: t.ts,
       time: new Date(t.ts).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Tokyo' }),
@@ -191,7 +191,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
         callback: (value: string | number) => {
           const numValue = Number(value)
           const sign = numValue >= 0 ? '+' : ''
-          return `${sign}¥${numValue}`
+          return `${sign}¥${numValue.toFixed(1)}`
         },
         font: {
           size: 11,
