@@ -40,6 +40,13 @@ Dashboard for tracking electricity demand, spot prices, and system reserves acro
 - Carbon intensity tracking (gCO₂/kWh)
 - Greenest/cleanest hour recommendations for load shifting
 
+**Duck Curve Analysis**
+- Identifies solar-induced demand valley patterns
+- Battery arbitrage opportunity detection
+- Optimal charge/discharge timing signals
+- Severity scoring (morning peak → midday valley drop)
+- ROI estimation for energy storage systems
+
 **Data Management**
 - Mock/Live data mode toggle (button UI)
 - Date persistence across mode switches
