@@ -3,8 +3,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type {
   GenerationResponse,
-  GenerationChartData,
-  CarbonIntensity
+  GenerationChartData
 } from '@/types/generation'
 import { toChartData, getCarbonLevel } from '@/types/generation'
 import { fetchGenerationMix } from '@/services/dataClient'
@@ -62,8 +61,10 @@ export const useGenerationStore = defineStore('generation', () => {
     if (tokyoChartData.value.length === 0) return null
 
     let maxRenewable = tokyoChartData.value[0]
+    if (!maxRenewable) return null
+
     tokyoChartData.value.forEach(point => {
-      if (point.renewable_pct > maxRenewable.renewable_pct) {
+      if (maxRenewable && point.renewable_pct > maxRenewable.renewable_pct) {
         maxRenewable = point
       }
     })
@@ -80,8 +81,10 @@ export const useGenerationStore = defineStore('generation', () => {
     if (tokyoChartData.value.length === 0) return null
 
     let minCarbon = tokyoChartData.value[0]
+    if (!minCarbon) return null
+
     tokyoChartData.value.forEach(point => {
-      if (point.carbon_gco2_kwh < minCarbon.carbon_gco2_kwh) {
+      if (minCarbon && point.carbon_gco2_kwh < minCarbon.carbon_gco2_kwh) {
         minCarbon = point
       }
     })

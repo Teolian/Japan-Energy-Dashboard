@@ -131,10 +131,12 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
       cornerRadius: 8,
       callbacks: {
         title: (context) => {
-          return `Time: ${context[0].label}`
+          return context[0] ? `Time: ${context[0].label}` : ''
         },
         label: (context) => {
           const value = context.parsed.y
+          if (value === null || value === undefined) return ''
+
           const percentage = generationStore.tokyoChartData[context.dataIndex]
           let pct = 0
 
@@ -145,7 +147,9 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
           return `${context.dataset.label}: ${Math.round(value).toLocaleString()} MW (${pct.toFixed(1)}%)`
         },
         footer: (context) => {
-          const idx = context[0].dataIndex
+          const idx = context[0]?.dataIndex
+          if (idx === undefined) return ''
+
           const point = generationStore.tokyoChartData[idx]
           if (!point) return ''
 
