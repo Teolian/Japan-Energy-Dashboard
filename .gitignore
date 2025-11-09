@@ -63,3 +63,15 @@ BUSINESS_ROADMAP_2.md
 
 # Backend ephemeral data (Railway ephemeral storage)
 backend/public/data/
+
+# Private technical specs
+GENERATION_MIX_SPEC.md
+
+# Backend compiled binaries
+backend/api-server
+backend/fetch-*
+backend/estimate-generation
+
+# Backend scripts
+backend/generate-frontend-generation.sh
+backend/generate-weather-files.sh
