@@ -48,15 +48,20 @@ const duckCurveData = computed(() => {
   // Duck Curve Severity: (morning_peak - midday_valley) / morning_peak
   const severity = ((morningPeak - middayValley) / morningPeak) * 100
 
-  // Find price patterns
-  const middayPrices = prices.slice(11, 16)
-  const eveningPrices = prices.slice(17, 22)
-  const minMiddayPrice = Math.min(...middayPrices)
-  const maxEveningPrice = Math.max(...eveningPrices)
-  const priceSpread = maxEveningPrice - minMiddayPrice
+  // Find global price min/max for battery arbitrage
+  const minPrice = Math.min(...prices)
+  const maxPrice = Math.max(...prices)
+  const chargeHour = prices.indexOf(minPrice)
+  const dischargeHour = prices.indexOf(maxPrice)
 
-  const chargeHour = 11 + middayPrices.indexOf(minMiddayPrice)
-  const dischargeHour = 17 + eveningPrices.indexOf(maxEveningPrice)
+  // Calculate spread (only profitable if discharge after charge)
+  let priceSpread = maxPrice - minPrice
+  let isProfitable = dischargeHour > chargeHour && priceSpread > 0
+
+  // If not profitable, set spread to 0
+  if (!isProfitable) {
+    priceSpread = 0
+  }
 
   return {
     severity,
@@ -68,9 +73,10 @@ const duckCurveData = computed(() => {
     eveningPeakHour,
     chargeHour,
     dischargeHour,
-    chargePrice: minMiddayPrice,
-    dischargePrice: maxEveningPrice,
+    chargePrice: minPrice,
+    dischargePrice: maxPrice,
     priceSpread,
+    isProfitable,
     demand,
     prices,
     times
@@ -320,7 +326,7 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
 
     <!-- ROI Insight -->
     <div
-      v-if="duckCurveData"
+      v-if="duckCurveData && duckCurveData.isProfitable"
       class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg"
     >
       <div class="flex items-start gap-2">
@@ -339,6 +345,25 @@ const chartOptions = computed<ChartOptions<'line'>>(() => ({
           <div class="mt-2 inline-flex items-baseline gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-800 rounded-full">
             <span class="text-xs text-blue-600 dark:text-blue-300">Estimated profit (100 MWh):</span>
             <span class="text-sm font-bold text-blue-700 dark:text-blue-200">¥{{ batteryROI.toLocaleString() }}/cycle</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- No Arbitrage Opportunity Warning -->
+    <div
+      v-if="duckCurveData && !duckCurveData.isProfitable"
+      class="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+    >
+      <div class="flex items-start gap-2">
+        <Battery :size="20" class="text-gray-400 mt-0.5" />
+        <div class="flex-1">
+          <div class="font-medium text-gray-900 dark:text-gray-100 text-sm">
+            No Battery Arbitrage Opportunity
+          </div>
+          <div class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            Price pattern does not support profitable charge/discharge cycle today.
+            Price range: ¥{{ duckCurveData.chargePrice.toFixed(2) }} - ¥{{ duckCurveData.dischargePrice.toFixed(2) }}/kWh.
           </div>
         </div>
       </div>
