@@ -50,7 +50,8 @@ jobs:
           go build -o fetch-demand cmd/fetch-demand-http/main.go
           go build -o fetch-jepx cmd/fetch-jepx-http/main.go
           go build -o fetch-reserve cmd/fetch-reserve-http/main.go
-          chmod +x fetch-*
+          go build -o estimate-generation cmd/estimate-generation/main.go
+          chmod +x fetch-* estimate-generation
 
       - name: Determine target date
         id: date
@@ -124,6 +125,50 @@ jobs:
             -date ${{ steps.date.outputs.target_date }} \
             -output ../frontend/public/data/jp/system/reserve-${{ steps.date.outputs.target_date }}.json \
             || echo "⚠️  Reserve fetch failed (may not be available yet)"
+
+      - name: Generate Tokyo generation mix
+        working-directory: ./backend
+        run: |
+          echo "⚡ Generating Tokyo generation mix..."
+          DEMAND_FILE="../frontend/public/data/jp/tokyo/demand-${{ steps.date.outputs.target_date }}.json"
+          JEPX_FILE="../frontend/public/data/jp/jepx/spot-tokyo-${{ steps.date.outputs.target_date }}.json"
+          if [ -f "$DEMAND_FILE" ] && [ -f "$JEPX_FILE" ]; then
+            # Copy files to backend for processing
+            mkdir -p public/data/jp/tokyo public/data/jp/jepx
+            cp "$DEMAND_FILE" public/data/jp/tokyo/
+            cp "$JEPX_FILE" public/data/jp/jepx/
+
+            # Generate
+            ./estimate-generation -area tokyo -date ${{ steps.date.outputs.target_date }}
+
+            # Copy result to frontend
+            cp public/data/jp/tokyo/generation-${{ steps.date.outputs.target_date }}.json ../frontend/public/data/jp/tokyo/
+            echo "✅ Tokyo generation mix created"
+          else
+            echo "⚠️  Skipping Tokyo generation (demand or JEPX data missing)"
+          fi
+
+      - name: Generate Kansai generation mix
+        working-directory: ./backend
+        run: |
+          echo "⚡ Generating Kansai generation mix..."
+          DEMAND_FILE="../frontend/public/data/jp/kansai/demand-${{ steps.date.outputs.target_date }}.json"
+          JEPX_FILE="../frontend/public/data/jp/jepx/spot-kansai-${{ steps.date.outputs.target_date }}.json"
+          if [ -f "$DEMAND_FILE" ] && [ -f "$JEPX_FILE" ]; then
+            # Copy files to backend for processing
+            mkdir -p public/data/jp/kansai public/data/jp/jepx
+            cp "$DEMAND_FILE" public/data/jp/kansai/
+            cp "$JEPX_FILE" public/data/jp/jepx/
+
+            # Generate
+            ./estimate-generation -area kansai -date ${{ steps.date.outputs.target_date }}
+
+            # Copy result to frontend
+            cp public/data/jp/kansai/generation-${{ steps.date.outputs.target_date }}.json ../frontend/public/data/jp/kansai/
+            echo "✅ Kansai generation mix created"
+          else
+            echo "⚠️  Skipping Kansai generation (demand or JEPX data missing)"
+          fi
 
       - name: List fetched files
         run: |
