@@ -5,6 +5,7 @@ import { useReserveStore } from '@/stores/reserve'
 import { useJEPXStore } from '@/stores/jepx'
 import { useSettlementStore } from '@/stores/settlement'
 import { useGenerationStore } from '@/stores/generation'
+import { useWeatherStore } from '@/stores/weather'
 import { useDarkMode } from '@/composables/useDarkMode'
 import { useFeatureFlags } from '@/composables/useFeatureFlags'
 import { useExport } from '@/composables/useExport'
@@ -39,6 +40,7 @@ const reserveStore = useReserveStore()
 const jepxStore = useJEPXStore()
 const settlementStore = useSettlementStore()
 const generationStore = useGenerationStore()
+const weatherStore = useWeatherStore()
 const { isDark, toggleDarkMode } = useDarkMode()
 const flags = useFeatureFlags()
 const { exportCombinedCSV } = useExport()
@@ -100,6 +102,9 @@ function runTokyoSettlement() {
 onMounted(async () => {
   await demandStore.fetchAllDemandData()
 
+  // Fetch weather forecast for both areas
+  weatherStore.fetchBoth(demandStore.currentDate)
+
   // Fetch reserve data only if feature enabled
   if (flags.isReserveEnabled) {
     reserveStore.fetchReserveData(demandStore.currentDate)
@@ -123,6 +128,9 @@ onMounted(async () => {
 
 // Refetch data when date changes
 watch(() => demandStore.currentDate, (newDate) => {
+  // Always fetch weather forecast
+  weatherStore.fetchBoth(newDate)
+
   if (flags.isReserveEnabled) {
     reserveStore.fetchReserveData(newDate)
   }
