@@ -5,6 +5,7 @@ import type { Area, DemandResponse, DataMode } from '@/types/demand'
 import type { ReserveResponse, ReserveStatus } from '@/types/reserve'
 import type { JEPXResponse, PricePoint } from '@/types/jepx'
 import type { SettlementRequest, SettlementResponse } from '@/types/settlement'
+import type { GenerationResponse } from '@/types/generation'
 
 const STORAGE_KEY = 'jp-energy-data-mode'
 
@@ -377,4 +378,25 @@ export async function runSettlement(req: SettlementRequest): Promise<SettlementR
   }
 
   return generateMockSettlementData(req)
+}
+
+// ==================== GENERATION MIX DATA ====================
+
+// Fetch generation mix data (estimated from demand + JEPX)
+export async function fetchGenerationMix(area: Area, date: string): Promise<GenerationResponse> {
+  const mode = getDataMode()
+
+  // LIVE mode: fetch from static JSON files
+  if (mode === 'live') {
+    const response = await fetch(`/data/jp/${area}/generation-${date}.json`)
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch generation data for ${area}/${date}: ${response.statusText}`)
+    }
+
+    return await response.json()
+  }
+
+  // MOCK mode: no mock data for generation yet, throw error
+  throw new Error('Generation mix data only available in LIVE mode')
 }

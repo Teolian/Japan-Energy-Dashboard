@@ -4,6 +4,7 @@ import { useDemandStore } from '@/stores/demand'
 import { useReserveStore } from '@/stores/reserve'
 import { useJEPXStore } from '@/stores/jepx'
 import { useSettlementStore } from '@/stores/settlement'
+import { useGenerationStore } from '@/stores/generation'
 import { useDarkMode } from '@/composables/useDarkMode'
 import { useFeatureFlags } from '@/composables/useFeatureFlags'
 import { useExport } from '@/composables/useExport'
@@ -28,6 +29,8 @@ import PriceSpreadChart from '@/components/comparison/PriceSpreadChart.vue'
 import DataModeToggle from '@/components/common/DataModeToggle.vue'
 import WeatherPanel from '@/components/weather/WeatherPanel.vue'
 import DuckCurveAnalysis from '@/components/dashboard/DuckCurveAnalysis.vue'
+import GenerationMixChart from '@/components/generation/GenerationMixChart.vue'
+import CarbonIntensityPanel from '@/components/generation/CarbonIntensityPanel.vue'
 import { Moon, Sun, ChevronLeft, ChevronRight, Download } from 'lucide-vue-next'
 import { demandToProfile } from '@/types/settlement'
 
@@ -35,6 +38,7 @@ const demandStore = useDemandStore()
 const reserveStore = useReserveStore()
 const jepxStore = useJEPXStore()
 const settlementStore = useSettlementStore()
+const generationStore = useGenerationStore()
 const { isDark, toggleDarkMode } = useDarkMode()
 const flags = useFeatureFlags()
 const { exportCombinedCSV } = useExport()
@@ -106,6 +110,11 @@ onMounted(async () => {
     jepxStore.fetchBothAreas(demandStore.currentDate)
   }
 
+  // Fetch generation mix data (requires demand + JEPX)
+  if (flags.isJEPXEnabled) {
+    generationStore.fetchTokyo(demandStore.currentDate)
+  }
+
   // Run settlement only if feature enabled
   if (flags.isSettlementEnabled) {
     runTokyoSettlement()
@@ -120,6 +129,7 @@ watch(() => demandStore.currentDate, (newDate) => {
 
   if (flags.isJEPXEnabled) {
     jepxStore.fetchBothAreas(newDate)
+    generationStore.fetchTokyo(newDate)
   }
 })
 
@@ -371,6 +381,23 @@ watch(() => demandStore.tokyoData, () => {
         <BaseCard>
           <DuckCurveAnalysis />
         </BaseCard>
+      </div>
+
+      <!-- Generation Mix & Carbon Intensity -->
+      <div v-if="flags.isJEPXEnabled" class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
+        <!-- Generation Mix Chart (2 columns) -->
+        <div class="lg:col-span-2">
+          <BaseCard>
+            <GenerationMixChart />
+          </BaseCard>
+        </div>
+
+        <!-- Carbon Intensity Panel (1 column) -->
+        <div>
+          <BaseCard>
+            <CarbonIntensityPanel />
+          </BaseCard>
+        </div>
       </div>
 
       <!-- Insights & Settlement Grid -->
