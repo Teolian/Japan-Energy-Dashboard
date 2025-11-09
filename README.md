@@ -33,6 +33,13 @@ Dashboard for tracking electricity demand, spot prices, and system reserves acro
 - Peak solar hour detection
 - Best time recommendations for PV-powered operations
 
+**Generation Mix**
+- Fuel type breakdown (Solar, Wind, Hydro, Nuclear, LNG, Coal)
+- Estimated from demand + JEPX price correlation
+- Renewable penetration percentage
+- Carbon intensity tracking (gCO₂/kWh)
+- Greenest/cleanest hour recommendations for load shifting
+
 **Data Management**
 - Mock/Live data mode toggle (button UI)
 - Date persistence across mode switches
@@ -67,6 +74,7 @@ Dashboard for tracking electricity demand, spot prices, and system reserves acro
 - JEPX - day-ahead spot prices
 - OCCTO - system reserve capacity
 - Open-Meteo - solar radiation & weather forecast
+- Generation Mix - estimated from demand + price patterns (no public API available)
 
 **Mock Mode:**
 - Sample data in `frontend/public/data/jp/`
@@ -77,14 +85,15 @@ Dashboard for tracking electricity demand, spot prices, and system reserves acro
 
 ```
 Frontend (Vue 3)
-├── Pinia Stores (demand, jepx, reserve, weather, settlement)
+├── Pinia Stores (demand, jepx, reserve, weather, generation)
 ├── Data Client (mock/live switching)
 └── Chart.js visualizations
 
 Backend (Go)
 ├── REST API (port 8080)
 ├── HTTP Adapters (TEPCO, Kansai, JEPX, OCCTO)
-└── CSV parsers with retry logic
+├── CSV parsers with retry logic
+└── Generation estimator (demand + price correlation)
 ```
 
 ## Project Structure
@@ -203,6 +212,36 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 }
 ```
 
+**Generation Mix (generation-tokyo-2025-10-24.json):**
+```json
+{
+  "date": "2025-10-24",
+  "area": "tokyo",
+  "source": {
+    "name": "Estimated (demand + price correlation)",
+    "url": "Internal calculation"
+  },
+  "meta": {
+    "avg_renewable_pct": 16.2,
+    "avg_carbon_gco2_kwh": 292.5,
+    "peak_solar_mw": 5877
+  },
+  "series": [
+    {
+      "ts": "2025-10-24T00:00:00+09:00",
+      "solar_mw": 0,
+      "wind_mw": 743,
+      "hydro_mw": 1982,
+      "nuclear_mw": 6688,
+      "lng_mw": 9214,
+      "coal_mw": 4607,
+      "other_mw": 1536,
+      "total_mw": 24770
+    }
+  ]
+}
+```
+
 ## State Management
 
 ```typescript
@@ -221,6 +260,13 @@ jepxStore.fetchJEPXData(area, date)
 const reserveStore = useReserveStore()
 reserveStore.data            // Reserve data
 reserveStore.fetchReserveData(date)
+
+// Generation Store
+const generationStore = useGenerationStore()
+generationStore.tokyoData    // Generation mix
+generationStore.tokyoMetrics // Renewable %, carbon intensity
+generationStore.greenestHour // Best hour for green procurement
+generationStore.fetchTokyo(date)
 ```
 
 ## HTTP Client
