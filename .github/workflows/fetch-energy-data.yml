@@ -50,6 +50,7 @@ jobs:
           go build -o fetch-demand cmd/fetch-demand-http/main.go
           go build -o fetch-jepx cmd/fetch-jepx-http/main.go
           go build -o fetch-reserve cmd/fetch-reserve-http/main.go
+          go build -o fetch-weather cmd/fetch-weather/main.go
           go build -o estimate-generation cmd/estimate-generation/main.go
           chmod +x fetch-* estimate-generation
 
@@ -72,6 +73,7 @@ jobs:
           mkdir -p frontend/public/data/jp/kansai
           mkdir -p frontend/public/data/jp/jepx
           mkdir -p frontend/public/data/jp/system
+          mkdir -p frontend/public/data/jp/weather
 
       - name: Fetch Tokyo demand data
         working-directory: ./backend
@@ -125,6 +127,26 @@ jobs:
             -date ${{ steps.date.outputs.target_date }} \
             -output ../frontend/public/data/jp/system/reserve-${{ steps.date.outputs.target_date }}.json \
             || echo "⚠️  Reserve fetch failed (may not be available yet)"
+
+      - name: Fetch Tokyo weather forecast
+        working-directory: ./backend
+        run: |
+          echo "🌤️  Fetching Tokyo weather forecast..."
+          ./fetch-weather \
+            -area tokyo \
+            -date ${{ steps.date.outputs.target_date }} \
+            -output ../frontend/public/data/jp/weather/weather-tokyo-${{ steps.date.outputs.target_date }}.json \
+            || echo "⚠️  Tokyo weather fetch failed"
+
+      - name: Fetch Kansai weather forecast
+        working-directory: ./backend
+        run: |
+          echo "🌤️  Fetching Kansai weather forecast..."
+          ./fetch-weather \
+            -area kansai \
+            -date ${{ steps.date.outputs.target_date }} \
+            -output ../frontend/public/data/jp/weather/weather-kansai-${{ steps.date.outputs.target_date }}.json \
+            || echo "⚠️  Kansai weather fetch failed"
 
       - name: Generate Tokyo generation mix
         working-directory: ./backend
