@@ -224,8 +224,8 @@
       "ghi": 0,
       "dni": 0,
       "dhi": 0,
-      "cloud_cover": 54,
-      "temperature": 11.6,
+      "cloud_cover": 72,
+      "temperature": 11.8,
       "estimated_pv_generation_mw": 0
     },
     {
@@ -234,8 +234,8 @@
       "ghi": 0,
       "dni": 0,
       "dhi": 0,
-      "cloud_cover": 48,
-      "temperature": 11.6,
+      "cloud_cover": 71,
+      "temperature": 11.9,
       "estimated_pv_generation_mw": 0
     },
     {
@@ -244,8 +244,8 @@
       "ghi": 0,
       "dni": 0,
       "dhi": 0,
-      "cloud_cover": 38,
-      "temperature": 11.4,
+      "cloud_cover": 37,
+      "temperature": 11.9,
       "estimated_pv_generation_mw": 0
     }
   ]
