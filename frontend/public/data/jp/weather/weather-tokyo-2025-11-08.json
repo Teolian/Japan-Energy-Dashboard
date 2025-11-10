@@ -1,0 +1,252 @@
+{
+  "location": "Tokyo",
+  "latitude": 35.7,
+  "longitude": 139.6875,
+  "date": "2025-11-08",
+  "timezone": "Asia/Tokyo",
+  "peak_radiation_hour": 13,
+  "avg_radiation": 138,
+  "total_radiation_kwh_m2": 3.312,
+  "data": [
+    {
+      "ts": "2025-11-08T00:00",
+      "hour": 0,
+      "ghi": 0,
+      "dni": 0,
+      "dhi": 0,
+      "cloud_cover": 0,
+      "temperature": 12.1,
+      "estimated_pv_generation_mw": 0
+    },
+    {
+      "ts": "2025-11-08T01:00",
+      "hour": 1,
+      "ghi": 0,
+      "dni": 0,
+      "dhi": 0,
+      "cloud_cover": 0,
+      "temperature": 11.6,
+      "estimated_pv_generation_mw": 0
+    },
+    {
+      "ts": "2025-11-08T02:00",
+      "hour": 2,
+      "ghi": 0,
+      "dni": 0,
+      "dhi": 0,
+      "cloud_cover": 16,
+      "temperature": 11.2,
+      "estimated_pv_generation_mw": 0
+    },
+    {
+      "ts": "2025-11-08T03:00",
+      "hour": 3,
+      "ghi": 0,
+      "dni": 0,
+      "dhi": 0,
+      "cloud_cover": 0,
+      "temperature": 11.9,
+      "estimated_pv_generation_mw": 0
+    },
+    {
+      "ts": "2025-11-08T04:00",
+      "hour": 4,
+      "ghi": 0,
+      "dni": 0,
+      "dhi": 0,
+      "cloud_cover": 0,
+      "temperature": 11.1,
+      "estimated_pv_generation_mw": 0
+    },
+    {
+      "ts": "2025-11-08T05:00",
+      "hour": 5,
+      "ghi": 0,
+      "dni": 0,
+      "dhi": 0,
+      "cloud_cover": 2,
+      "temperature": 10.9,
+      "estimated_pv_generation_mw": 0
+    },
+    {
+      "ts": "2025-11-08T06:00",
+      "hour": 6,
+      "ghi": 0,
+      "dni": 0,
+      "dhi": 0,
+      "cloud_cover": 22,
+      "temperature": 9.9,
+      "estimated_pv_generation_mw": 0
+    },
+    {
+      "ts": "2025-11-08T07:00",
+      "hour": 7,
+      "ghi": 26,
+      "dni": 2.4,
+      "dhi": 23.6,
+      "cloud_cover": 31,
+      "temperature": 10.4,
+      "estimated_pv_generation_mw": 0.0039000000000000003
+    },
+    {
+      "ts": "2025-11-08T08:00",
+      "hour": 8,
+      "ghi": 143,
+      "dni": 49.6,
+      "dhi": 93.4,
+      "cloud_cover": 38,
+      "temperature": 11.9,
+      "estimated_pv_generation_mw": 0.021450000000000004
+    },
+    {
+      "ts": "2025-11-08T09:00",
+      "hour": 9,
+      "ghi": 270,
+      "dni": 126.1,
+      "dhi": 143.9,
+      "cloud_cover": 37,
+      "temperature": 13.1,
+      "estimated_pv_generation_mw": 0.0405
+    },
+    {
+      "ts": "2025-11-08T10:00",
+      "hour": 10,
+      "ghi": 383,
+      "dni": 206.9,
+      "dhi": 176.1,
+      "cloud_cover": 35,
+      "temperature": 14.1,
+      "estimated_pv_generation_mw": 0.05745
+    },
+    {
+      "ts": "2025-11-08T11:00",
+      "hour": 11,
+      "ghi": 476,
+      "dni": 287.2,
+      "dhi": 188.8,
+      "cloud_cover": 26,
+      "temperature": 15.1,
+      "estimated_pv_generation_mw": 0.0714
+    },
+    {
+      "ts": "2025-11-08T12:00",
+      "hour": 12,
+      "ghi": 543,
+      "dni": 364.9,
+      "dhi": 178.1,
+      "cloud_cover": 10,
+      "temperature": 16.2,
+      "estimated_pv_generation_mw": 0.08145000000000001
+    },
+    {
+      "ts": "2025-11-08T13:00",
+      "hour": 13,
+      "ghi": 553,
+      "dni": 394.6,
+      "dhi": 158.4,
+      "cloud_cover": 8,
+      "temperature": 16.7,
+      "estimated_pv_generation_mw": 0.08295
+    },
+    {
+      "ts": "2025-11-08T14:00",
+      "hour": 14,
+      "ghi": 462,
+      "dni": 314.1,
+      "dhi": 147.9,
+      "cloud_cover": 8,
+      "temperature": 16.9,
+      "estimated_pv_generation_mw": 0.06930000000000001
+    },
+    {
+      "ts": "2025-11-08T15:00",
+      "hour": 15,
+      "ghi": 305,
+      "dni": 174.1,
+      "dhi": 130.9,
+      "cloud_cover": 25,
+      "temperature": 16.5,
+      "estimated_pv_generation_mw": 0.04575
+    },
+    {
+      "ts": "2025-11-08T16:00",
+      "hour": 16,
+      "ghi": 136,
+      "dni": 51.1,
+      "dhi": 84.9,
+      "cloud_cover": 28,
+      "temperature": 15.9,
+      "estimated_pv_generation_mw": 0.0204
+    },
+    {
+      "ts": "2025-11-08T17:00",
+      "hour": 17,
+      "ghi": 15,
+      "dni": 0.4,
+      "dhi": 14.6,
+      "cloud_cover": 27,
+      "temperature": 15.1,
+      "estimated_pv_generation_mw": 0.00225
+    },
+    {
+      "ts": "2025-11-08T18:00",
+      "hour": 18,
+      "ghi": 0,
+      "dni": 0,
+      "dhi": 0,
+      "cloud_cover": 50,
+      "temperature": 14.4,
+      "estimated_pv_generation_mw": 0
+    },
+    {
+      "ts": "2025-11-08T19:00",
+      "hour": 19,
+      "ghi": 0,
+      "dni": 0,
+      "dhi": 0,
+      "cloud_cover": 24,
+      "temperature": 13.6,
+      "estimated_pv_generation_mw": 0
+    },
+    {
+      "ts": "2025-11-08T20:00",
+      "hour": 20,
+      "ghi": 0,
+      "dni": 0,
+      "dhi": 0,
+      "cloud_cover": 80,
+      "temperature": 12.9,
+      "estimated_pv_generation_mw": 0
+    },
+    {
+      "ts": "2025-11-08T21:00",
+      "hour": 21,
+      "ghi": 0,
+      "dni": 0,
+      "dhi": 0,
+      "cloud_cover": 67,
+      "temperature": 12.7,
+      "estimated_pv_generation_mw": 0
+    },
+    {
+      "ts": "2025-11-08T22:00",
+      "hour": 22,
+      "ghi": 0,
+      "dni": 0,
+      "dhi": 0,
+      "cloud_cover": 53,
+      "temperature": 12.6,
+      "estimated_pv_generation_mw": 0
+    },
+    {
+      "ts": "2025-11-08T23:00",
+      "hour": 23,
+      "ghi": 0,
+      "dni": 0,
+      "dhi": 0,
+      "cloud_cover": 55,
+      "temperature": 12.4,
+      "estimated_pv_generation_mw": 0
+    }
+  ]
+}
