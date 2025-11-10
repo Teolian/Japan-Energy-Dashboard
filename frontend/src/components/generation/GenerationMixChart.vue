@@ -15,6 +15,7 @@ import {
 } from 'chart.js'
 import { useGenerationStore } from '@/stores/generation'
 import { Leaf, Zap, Factory } from 'lucide-vue-next'
+import ChartLoadingSkeleton from '@/components/common/ChartLoadingSkeleton.vue'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 
@@ -228,9 +229,21 @@ const greenest = computed(() => generationStore.greenestHour)
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="generationStore.loading" class="h-80">
+      <ChartLoadingSkeleton />
+    </div>
+
     <!-- Chart -->
-    <div class="h-80 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+    <div v-else-if="chartData.datasets.length > 0" class="h-80 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
       <Line :data="chartData" :options="chartOptions" />
+    </div>
+
+    <!-- No Data State -->
+    <div v-else class="h-80 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center">
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        No generation data available for this date
+      </p>
     </div>
 
     <!-- Greenest Hour Highlight -->

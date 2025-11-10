@@ -112,11 +112,9 @@ onMounted(async () => {
 
   // Fetch JEPX prices only if feature enabled
   if (flags.isJEPXEnabled) {
-    jepxStore.fetchBothAreas(demandStore.currentDate)
-  }
+    await jepxStore.fetchBothAreas(demandStore.currentDate)
 
-  // Fetch generation mix data (requires demand + JEPX)
-  if (flags.isJEPXEnabled) {
+    // Fetch generation mix data after JEPX is ready (requires demand + JEPX)
     generationStore.fetchTokyo(demandStore.currentDate)
   }
 
@@ -127,7 +125,7 @@ onMounted(async () => {
 })
 
 // Refetch data when date changes
-watch(() => demandStore.currentDate, (newDate) => {
+watch(() => demandStore.currentDate, async (newDate) => {
   // Always fetch weather forecast
   weatherStore.fetchBothAreas(newDate)
 
@@ -136,7 +134,8 @@ watch(() => demandStore.currentDate, (newDate) => {
   }
 
   if (flags.isJEPXEnabled) {
-    jepxStore.fetchBothAreas(newDate)
+    // Wait for JEPX to load before fetching generation mix
+    await jepxStore.fetchBothAreas(newDate)
     generationStore.fetchTokyo(newDate)
   }
 })
