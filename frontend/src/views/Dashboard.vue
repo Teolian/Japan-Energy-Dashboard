@@ -103,7 +103,7 @@ onMounted(async () => {
   await demandStore.fetchAllDemandData()
 
   // Fetch weather forecast for both areas
-  weatherStore.fetchBoth(demandStore.currentDate)
+  weatherStore.fetchBothAreas(demandStore.currentDate)
 
   // Fetch reserve data only if feature enabled
   if (flags.isReserveEnabled) {
@@ -129,7 +129,7 @@ onMounted(async () => {
 // Refetch data when date changes
 watch(() => demandStore.currentDate, (newDate) => {
   // Always fetch weather forecast
-  weatherStore.fetchBoth(newDate)
+  weatherStore.fetchBothAreas(newDate)
 
   if (flags.isReserveEnabled) {
     reserveStore.fetchReserveData(newDate)
