@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Lightbulb, TrendingUp, TrendingDown, AlertCircle, CheckCircle } from 'lucide-vue-next'
 import { useDemandStore } from '@/stores/demand'
 import { useJEPXStore } from '@/stores/jepx'
 import { useReserveStore } from '@/stores/reserve'
 import { useSettlementStore } from '@/stores/settlement'
 
+const { t } = useI18n()
 const demandStore = useDemandStore()
 const jepxStore = useJEPXStore()
 const reserveStore = useReserveStore()
@@ -32,8 +34,8 @@ const insights = computed((): Insight[] => {
       results.push({
         type: 'info',
         icon: TrendingUp,
-        title: 'Peak Demand Time',
-        message: `Peak demand occurs at ${hour}:00 with ${maxDemand.toLocaleString()} MW in Tokyo area`
+        title: t('insights.peakDemandTime'),
+        message: t('insights.peakDemandMessage', { hour, demand: maxDemand.toLocaleString(), area: t('areas.tokyo') })
       })
     }
   }
@@ -53,8 +55,8 @@ const insights = computed((): Insight[] => {
         results.push({
           type: 'tip',
           icon: Lightbulb,
-          title: 'Cost Optimization Opportunity',
-          message: `Prices are ${diff}% higher during peak hours. Shifting consumption to night (0-6am) can reduce costs significantly`
+          title: t('insights.costOptimization'),
+          message: t('insights.costOptimizationMessage', { diff })
         })
       }
     }
@@ -71,22 +73,22 @@ const insights = computed((): Insight[] => {
       results.push({
         type: 'success',
         icon: CheckCircle,
-        title: 'Power Supply Stable',
-        message: `Reserve margin at ${minReserve.toFixed(1)}% - Power supply is comfortable with no constraints expected`
+        title: t('insights.powerSupplyStable'),
+        message: t('insights.powerSupplyStableMessage', { reserve: minReserve.toFixed(1) })
       })
     } else if (minReserve >= 5) {
       results.push({
         type: 'warning',
         icon: AlertCircle,
-        title: 'Reserve Margin Under Watch',
-        message: `Reserve at ${minReserve.toFixed(1)}% - Monitoring required. Consider load shifting if possible`
+        title: t('insights.reserveUnderWatch'),
+        message: t('insights.reserveUnderWatchMessage', { reserve: minReserve.toFixed(1) })
       })
     } else {
       results.push({
         type: 'warning',
         icon: AlertCircle,
-        title: 'Tight Power Supply',
-        message: `Reserve critically low at ${minReserve.toFixed(1)}% - Demand reduction recommended during peak hours`
+        title: t('insights.tightPowerSupply'),
+        message: t('insights.tightPowerSupplyMessage', { reserve: minReserve.toFixed(1) })
       })
     }
   }
@@ -134,7 +136,7 @@ const getBgColor = (type: string) => {
     <div class="flex items-center gap-2 mb-4">
       <Lightbulb :size="20" class="text-gray-700 dark:text-gray-300" />
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-        Key Insights
+        {{ t('dashboard.insights') }}
       </h2>
     </div>
 

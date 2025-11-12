@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import SectionCard from '@/components/common/SectionCard.vue'
 import MetricBadge from '@/components/common/MetricBadge.vue'
 import DemandChart from './DemandChart.vue'
@@ -18,6 +19,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const { t } = useI18n()
 const demandStore = useDemandStore()
 const reserveStore = useReserveStore()
 const jepxStore = useJEPXStore()
@@ -60,7 +62,7 @@ const avgTrend = computed(() => {
 const avgRadiation = computed(() => forecast.value?.avg_radiation || 0)
 const peakRadiationHour = computed(() => forecast.value?.peak_radiation_hour || 12)
 
-const areaName = computed(() => props.area === 'tokyo' ? 'Tokyo (TEPCO)' : 'Kansai Electric')
+const areaName = computed(() => t(`areas.${props.area}`))
 </script>
 
 <template>
@@ -80,34 +82,34 @@ const areaName = computed(() => props.area === 'tokyo' ? 'Tokyo (TEPCO)' : 'Kans
     <div v-if="metrics" class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
       <div class="grid grid-cols-4 gap-4">
         <MetricBadge
-          label="Peak"
+          :label="t('metrics.peak')"
           :value="metrics.peak"
-          unit="MW"
+          :unit="t('units.mw')"
           :trend="peakTrend"
           color="blue"
           compact
         />
         <MetricBadge
-          label="Average"
+          :label="t('metrics.average')"
           :value="metrics.average"
-          unit="MW"
+          :unit="t('units.mw')"
           :trend="avgTrend"
           color="gray"
           compact
         />
         <MetricBadge
           v-if="metrics.forecastAccuracy"
-          label="Accuracy"
+          :label="t('metrics.forecast')"
           :value="metrics.forecastAccuracy"
-          unit="%"
+          :unit="t('units.percent')"
           color="green"
           compact
         />
         <MetricBadge
           v-if="reserve"
-          label="Reserve"
+          :label="t('metrics.reserveMargin')"
           :value="reserve.reserve_margin_pct.toFixed(1)"
-          unit="%"
+          :unit="t('units.percent')"
           :color="reserve.reserve_margin_pct >= 8 ? 'green' : reserve.reserve_margin_pct >= 5 ? 'orange' : 'red'"
           compact
         />

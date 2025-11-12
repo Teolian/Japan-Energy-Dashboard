@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useDemandStore } from '@/stores/demand'
 import { useReserveStore } from '@/stores/reserve'
 import { useJEPXStore } from '@/stores/jepx'
@@ -13,6 +14,8 @@ import { useKeyboardNavigation } from '@/composables/useKeyboardNavigation'
 // Components
 import BaseButton from '@/components/common/BaseButton.vue'
 import DataModeToggle from '@/components/common/DataModeToggle.vue'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
+import Navigation from '@/components/common/Navigation.vue'
 import SummaryStatsBar from '@/components/dashboard/SummaryStatsBar.vue'
 import InsightsPanel from '@/components/dashboard/InsightsPanel.vue'
 import DataStatusIndicator from '@/components/dashboard/DataStatusIndicator.vue'
@@ -26,6 +29,9 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 
 import { Moon, Sun, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+
+// i18n
+const { t } = useI18n()
 
 // Stores
 const demandStore = useDemandStore()
@@ -89,21 +95,23 @@ watch(() => demandStore.currentDate, async (newDate) => {
     <header class="mb-8">
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-4xl font-bold text-gray-900 dark:text-white">
-            Japan Energy Dashboard
+          <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent dark:from-blue-400 dark:to-cyan-300">
+            {{ t('header.title') }}
           </h1>
           <p class="text-gray-600 dark:text-gray-400 mt-2">
-            Auto-updated daily at 00:30 JST with latest data
+            {{ t('header.subtitle') }}
           </p>
         </div>
         <div class="flex items-center gap-3">
+          <LanguageSwitcher />
           <DataModeToggle />
           <button
             @click="toggleDarkMode"
             class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            :title="isDark ? 'Light Mode' : 'Dark Mode'"
           >
-            <Moon v-if="!isDark" :size="24" />
-            <Sun v-else :size="24" />
+            <Moon v-if="!isDark" :size="24" class="text-gray-700 dark:text-gray-300" />
+            <Sun v-else :size="24" class="text-gray-700 dark:text-gray-300" />
           </button>
         </div>
       </div>
@@ -121,6 +129,9 @@ watch(() => demandStore.currentDate, async (newDate) => {
         </BaseButton>
       </div>
     </header>
+
+    <!-- Navigation Tabs -->
+    <Navigation />
 
     <!-- Summary Stats Bar -->
     <SummaryStatsBar v-if="!demandStore.loading" class="mb-8 -mx-8" />

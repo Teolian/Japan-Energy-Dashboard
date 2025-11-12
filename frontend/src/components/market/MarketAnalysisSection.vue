@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import SectionCard from '@/components/common/SectionCard.vue'
 import PriceSpreadChart from '@/components/comparison/PriceSpreadChart.vue'
 import DuckCurveAnalysis from '@/components/dashboard/DuckCurveAnalysis.vue'
@@ -7,6 +8,7 @@ import { TrendingUp } from 'lucide-vue-next'
 
 type Tab = 'spread' | 'duck'
 
+const { t } = useI18n()
 const activeTab = ref<Tab>('spread')
 
 const tabs = [
@@ -22,7 +24,7 @@ const tabs = [
         <div class="flex items-center gap-2">
           <TrendingUp :size="20" class="text-orange-600 dark:text-orange-400" />
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Market Analysis
+            {{ t('dashboard.prices') }}
           </h2>
         </div>
 
