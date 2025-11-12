@@ -78,7 +78,7 @@ export const useTradingStore = defineStore('trading', () => {
         const hour = new Date(current.ts).getHours()
 
         // Calculate if this is a buy or sell opportunity
-        const avgPrice = prices.reduce((sum, p) => sum + p.price, 0) / prices.length
+        const avgPrice = prices.reduce((sum: number, p) => sum + p.price, 0) / prices.length
         const signal: SignalType = current.price < avgPrice * 0.85 ? 'buy'
                                    : current.price > avgPrice * 1.15 ? 'sell'
                                    : 'hold'
@@ -86,9 +86,12 @@ export const useTradingStore = defineStore('trading', () => {
         if (signal !== 'hold') {
           // Find opposite signal in next 12 hours
           const futureWindow = prices.slice(i + 1, i + 13)
+          if (futureWindow.length === 0) continue
+
+          const firstWindow = futureWindow[0]!
           const bestTarget = signal === 'buy'
-            ? futureWindow.reduce((max, p) => p.price > max.price ? p : max, futureWindow[0] || current)
-            : futureWindow.reduce((min, p) => p.price < min.price ? p : min, futureWindow[0] || current)
+            ? futureWindow.reduce((max, p) => p.price > max.price ? p : max, firstWindow)
+            : futureWindow.reduce((min, p) => p.price < min.price ? p : min, firstWindow)
 
           if (bestTarget) {
             const spread = signal === 'buy'
@@ -145,7 +148,7 @@ export const useTradingStore = defineStore('trading', () => {
 
       // Build load profile
       for (let i = 0; i < 24; i++) {
-        const price = prices.find(p => new Date(p.ts).getHours() === i)
+        const price = prices.find((p) => new Date(p.ts).getHours() === i)
         const demandPoint = demand.series.find(d => new Date(d.ts).getHours() === i)
 
         if (price && demandPoint) {

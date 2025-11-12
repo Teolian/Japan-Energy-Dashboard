@@ -3,7 +3,6 @@ import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTradingStore } from '@/stores/trading'
 import { useDemandStore } from '@/stores/demand'
-import { useJEPXStore } from '@/stores/jepx'
 import { Brain, TrendingUp, Zap } from 'lucide-vue-next'
 
 // Components
@@ -15,7 +14,6 @@ import ChartLoadingSkeleton from '@/components/common/ChartLoadingSkeleton.vue'
 const { t } = useI18n()
 const tradingStore = useTradingStore()
 const demandStore = useDemandStore()
-const jepxStore = useJEPXStore()
 
 const selectedArea = ref<'tokyo' | 'kansai'>('tokyo')
 const activeTab = ref<'arbitrage' | 'loadshift'>('arbitrage')

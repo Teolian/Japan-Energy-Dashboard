@@ -6,12 +6,13 @@ import { Languages } from 'lucide-vue-next'
 const { locale } = useI18n()
 
 const languages = [
-  { code: 'en', label: 'English', flag: '🇬🇧' },
-  { code: 'ja', label: '日本語', flag: '🇯🇵' }
-]
+  { code: 'en' as const, label: 'English', flag: '🇬🇧' },
+  { code: 'ja' as const, label: '日本語', flag: '🇯🇵' }
+] as const
 
 const currentLanguage = () => {
-  return languages.find(lang => lang.code === getCurrentLocale()) || languages[0]
+  const found = languages.find(lang => lang.code === getCurrentLocale())
+  return found ?? languages[0]
 }
 
 const switchLanguage = (langCode: 'en' | 'ja') => {

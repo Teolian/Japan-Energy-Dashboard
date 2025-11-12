@@ -58,6 +58,14 @@ export const useJEPXStore = defineStore('jepx', () => {
     }
   })
 
+  // Get price data array (for trading analysis)
+  const priceData = computed(() => {
+    return (area: Area) => {
+      const data = pricesForArea.value(area)
+      return data?.price_yen_per_kwh || []
+    }
+  })
+
   // Actions
   async function fetchJEPXData(area: Area, date: string) {
     loading.value = true
@@ -118,6 +126,7 @@ export const useJEPXStore = defineStore('jepx', () => {
     source,
     priceValues,
     priceAtHour,
+    priceData,
     // Actions
     fetchJEPXData,
     fetchBothAreas,

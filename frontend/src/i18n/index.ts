@@ -25,10 +25,10 @@ export default i18n
 
 // Helper to switch locale
 export function setLocale(locale: 'en' | 'ja') {
-  i18n.global.locale.value = locale
+  (i18n.global.locale as any).value = locale
   localStorage.setItem('jp-energy-locale', locale)
 }
 
 export function getCurrentLocale(): 'en' | 'ja' {
-  return i18n.global.locale.value as 'en' | 'ja'
+  return (i18n.global.locale as any).value as 'en' | 'ja'
 }

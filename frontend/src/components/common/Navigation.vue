@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { LayoutDashboard, Brain, BarChart3, FileText } from 'lucide-vue-next'
+import { LayoutDashboard, Brain } from 'lucide-vue-next'
 
 const { t } = useI18n()
 const route = useRoute()
