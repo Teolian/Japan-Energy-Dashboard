@@ -3,17 +3,24 @@ import { onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTradingStore } from '@/stores/trading'
 import { useDemandStore } from '@/stores/demand'
-import { Brain, TrendingUp, Zap } from 'lucide-vue-next'
+import { useDarkMode } from '@/composables/useDarkMode'
+import { useKeyboardNavigation } from '@/composables/useKeyboardNavigation'
+import { Brain, TrendingUp, Zap, Moon, Sun, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
 // Components
 import ArbitragePanel from '@/components/trading/ArbitragePanel.vue'
 import LoadShiftAdvisor from '@/components/trading/LoadShiftAdvisor.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import ChartLoadingSkeleton from '@/components/common/ChartLoadingSkeleton.vue'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
+import DataModeToggle from '@/components/common/DataModeToggle.vue'
+import Navigation from '@/components/common/Navigation.vue'
+import BaseButton from '@/components/common/BaseButton.vue'
 
 const { t } = useI18n()
 const tradingStore = useTradingStore()
 const demandStore = useDemandStore()
+const { isDark, toggleDarkMode } = useDarkMode()
 
 const selectedArea = ref<'tokyo' | 'kansai'>('tokyo')
 const activeTab = ref<'arbitrage' | 'loadshift'>('arbitrage')
@@ -23,8 +30,18 @@ const tabs = [
   { id: 'loadshift' as const, label: t('trading.loadShift'), icon: TrendingUp }
 ]
 
+// Keyboard navigation for date changes
+useKeyboardNavigation(
+  () => demandStore.prevDay(),
+  () => demandStore.nextDay()
+)
+
 // Initial analysis
-onMounted(() => {
+onMounted(async () => {
+  // Fetch demand data if not already loaded
+  if (!demandStore.tokyoData && !demandStore.kansaiData) {
+    await demandStore.fetchAllDemandData()
+  }
   runAnalysis()
 })
 
@@ -46,6 +63,48 @@ function runAnalysis() {
 
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+    <!-- Header -->
+    <header class="mb-8">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent dark:from-blue-400 dark:to-cyan-300">
+            {{ t('header.title') }}
+          </h1>
+          <p class="text-gray-600 dark:text-gray-400 mt-2">
+            {{ t('header.subtitle') }}
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <LanguageSwitcher />
+          <DataModeToggle />
+          <button
+            @click="toggleDarkMode"
+            class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            :title="isDark ? 'Light Mode' : 'Dark Mode'"
+          >
+            <Moon v-if="!isDark" :size="24" class="text-gray-700 dark:text-gray-300" />
+            <Sun v-else :size="24" class="text-gray-700 dark:text-gray-300" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Date Navigation -->
+      <div class="flex items-center justify-center gap-4 mt-6">
+        <BaseButton size="sm" @click="demandStore.prevDay">
+          <ChevronLeft :size="16" />
+        </BaseButton>
+        <div class="text-lg font-semibold text-gray-900 dark:text-white">
+          {{ demandStore.currentDate }}
+        </div>
+        <BaseButton size="sm" @click="demandStore.nextDay">
+          <ChevronRight :size="16" />
+        </BaseButton>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <Navigation />
+
     <!-- Hero Header -->
     <div class="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500 p-8 shadow-energy-lg">
       <div class="relative z-10">
