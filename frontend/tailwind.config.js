@@ -90,6 +90,9 @@ export default {
           '0%': { boxShadow: '0 0 5px rgba(59, 130, 246, 0.5)' },
           '100%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.8)' }
         }
+      },
+      gridTemplateColumns: {
+        '24': 'repeat(24, minmax(0, 1fr))'
       }
     }
   },
