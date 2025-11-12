@@ -10,16 +10,17 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler,
-  type ChartOptions
+  Filler
 } from 'chart.js'
 import { useGenerationStore } from '@/stores/generation'
+import { useChartConfig } from '@/composables/useChartConfig'
 import { Leaf, Zap, Factory } from 'lucide-vue-next'
 import ChartLoadingSkeleton from '@/components/common/ChartLoadingSkeleton.vue'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler)
 
 const generationStore = useGenerationStore()
+const { colors, stackedAreaConfig, withOpacity } = useChartConfig()
 
 // Chart data - stacked area for generation mix
 const chartData = computed(() => {
@@ -37,160 +38,140 @@ const chartData = computed(() => {
       {
         label: 'Solar',
         data: data.map(d => d.solar),
-        borderColor: 'rgb(251, 191, 36)',
-        backgroundColor: 'rgba(251, 191, 36, 0.6)',
+        borderColor: colors.solar,
+        backgroundColor: withOpacity(colors.solar, 0.6),
         borderWidth: 0,
         fill: true,
-        tension: 0.4,
+        tension: 0.3,
         pointRadius: 0
       },
       {
         label: 'Wind',
         data: data.map(d => d.wind),
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+        borderColor: colors.wind,
+        backgroundColor: withOpacity(colors.wind, 0.6),
         borderWidth: 0,
         fill: true,
-        tension: 0.4,
+        tension: 0.3,
         pointRadius: 0
       },
       {
         label: 'Hydro',
         data: data.map(d => d.hydro),
-        borderColor: 'rgb(14, 165, 233)',
-        backgroundColor: 'rgba(14, 165, 233, 0.6)',
+        borderColor: colors.hydro,
+        backgroundColor: withOpacity(colors.hydro, 0.6),
         borderWidth: 0,
         fill: true,
-        tension: 0.4,
+        tension: 0.3,
         pointRadius: 0
       },
       {
         label: 'Nuclear',
         data: data.map(d => d.nuclear),
-        borderColor: 'rgb(168, 85, 247)',
-        backgroundColor: 'rgba(168, 85, 247, 0.6)',
+        borderColor: colors.nuclear,
+        backgroundColor: withOpacity(colors.nuclear, 0.6),
         borderWidth: 0,
         fill: true,
-        tension: 0.4,
+        tension: 0.3,
         pointRadius: 0
       },
       {
         label: 'LNG',
         data: data.map(d => d.lng),
-        borderColor: 'rgb(156, 163, 175)',
-        backgroundColor: 'rgba(156, 163, 175, 0.6)',
+        borderColor: colors.lng,
+        backgroundColor: withOpacity(colors.lng, 0.6),
         borderWidth: 0,
         fill: true,
-        tension: 0.4,
+        tension: 0.3,
         pointRadius: 0
       },
       {
         label: 'Coal',
         data: data.map(d => d.coal),
-        borderColor: 'rgb(75, 85, 99)',
-        backgroundColor: 'rgba(75, 85, 99, 0.6)',
+        borderColor: colors.coal,
+        backgroundColor: withOpacity(colors.coal, 0.6),
         borderWidth: 0,
         fill: true,
-        tension: 0.4,
+        tension: 0.3,
         pointRadius: 0
       },
       {
         label: 'Other',
         data: data.map(d => d.other),
-        borderColor: 'rgb(107, 114, 128)',
-        backgroundColor: 'rgba(107, 114, 128, 0.4)',
+        borderColor: colors.other,
+        backgroundColor: withOpacity(colors.other, 0.4),
         borderWidth: 0,
         fill: true,
-        tension: 0.4,
+        tension: 0.3,
         pointRadius: 0
       }
     ]
   }
 })
 
-const chartOptions = computed<ChartOptions<'line'>>(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  interaction: {
-    mode: 'index',
-    intersect: false
-  },
-  plugins: {
-    legend: {
-      display: true,
-      position: 'bottom',
-      labels: {
-        usePointStyle: true,
-        padding: 12,
-        font: { size: 11 }
-      }
-    },
-    tooltip: {
-      enabled: true,
-      backgroundColor: 'rgba(0, 0, 0, 0.85)',
-      padding: 12,
-      cornerRadius: 8,
-      callbacks: {
-        title: (context) => {
-          return context[0] ? `Time: ${context[0].label}` : ''
-        },
-        label: (context) => {
-          const value = context.parsed.y
-          if (value === null || value === undefined) return ''
-
-          const percentage = generationStore.tokyoChartData[context.dataIndex]
-          let pct = 0
-
-          if (percentage && percentage.total > 0) {
-            pct = (value / percentage.total) * 100
-          }
-
-          return `${context.dataset.label}: ${Math.round(value).toLocaleString()} MW (${pct.toFixed(1)}%)`
-        },
-        footer: (context) => {
-          const idx = context[0]?.dataIndex
-          if (idx === undefined) return ''
-
-          const point = generationStore.tokyoChartData[idx]
-          if (!point) return ''
-
-          return [
-            `Total: ${Math.round(point.total).toLocaleString()} MW`,
-            `Renewable: ${point.renewable_pct.toFixed(1)}%`,
-            `Carbon: ${Math.round(point.carbon_gco2_kwh)} gCO₂/kWh`
-          ]
-        }
-      }
-    }
-  },
-  scales: {
-    x: {
-      stacked: true,
-      grid: {
-        display: false
-      },
-      ticks: {
-        font: { size: 10 }
-      }
-    },
-    y: {
-      stacked: true,
-      title: {
+const chartOptions = computed(() => {
+  return stackedAreaConfig({
+    plugins: {
+      legend: {
         display: true,
-        text: 'Generation (MW)',
-        font: { size: 12, weight: 'bold' as const }
+        position: 'bottom',
+        labels: {
+          usePointStyle: true,
+          padding: 12,
+          font: { size: 11 }
+        }
       },
-      grid: {
-        color: 'rgba(0, 0, 0, 0.06)'
-      },
-      ticks: {
-        callback: (value) => {
-          return `${Math.round(Number(value) / 1000)}k`
+      tooltip: {
+        callbacks: {
+          title: (context) => {
+            return context[0] ? `Time: ${context[0].label}` : ''
+          },
+          label: (context) => {
+            const value = context.parsed.y
+            if (value === null || value === undefined) return ''
+
+            const percentage = generationStore.tokyoChartData[context.dataIndex]
+            let pct = 0
+
+            if (percentage && percentage.total > 0) {
+              pct = (value / percentage.total) * 100
+            }
+
+            return `${context.dataset.label}: ${Math.round(value).toLocaleString()} MW (${pct.toFixed(1)}%)`
+          },
+          footer: (context) => {
+            const idx = context[0]?.dataIndex
+            if (idx === undefined) return ''
+
+            const point = generationStore.tokyoChartData[idx]
+            if (!point) return ''
+
+            return [
+              `Total: ${Math.round(point.total).toLocaleString()} MW`,
+              `Renewable: ${point.renewable_pct.toFixed(1)}%`,
+              `Carbon: ${Math.round(point.carbon_gco2_kwh)} gCO₂/kWh`
+            ]
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        stacked: true,
+        title: {
+          display: true,
+          text: 'Generation (MW)',
+          font: { size: 12, weight: 'bold' as const }
+        },
+        ticks: {
+          callback: (value) => {
+            return `${Math.round(Number(value) / 1000)}k`
+          }
         }
       }
     }
-  }
-}))
+  })
+})
 
 // Metrics
 const metrics = computed(() => generationStore.tokyoMetrics)
