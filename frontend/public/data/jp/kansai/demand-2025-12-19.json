@@ -1,0 +1,132 @@
+{
+  "area": "kansai",
+  "date": "2025-12-19",
+  "timezone": "Asia/Tokyo",
+  "timescale": "hourly",
+  "series": [
+    {
+      "ts": "2025-12-19T00:00:00+09:00",
+      "demand_mw": 15238,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T01:00:00+09:00",
+      "demand_mw": 14587,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T02:00:00+09:00",
+      "demand_mw": 14487,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T03:00:00+09:00",
+      "demand_mw": 14876,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T04:00:00+09:00",
+      "demand_mw": 15089,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T05:00:00+09:00",
+      "demand_mw": 15198,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T06:00:00+09:00",
+      "demand_mw": 16116,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T07:00:00+09:00",
+      "demand_mw": 17823,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T08:00:00+09:00",
+      "demand_mw": 19275,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T09:00:00+09:00",
+      "demand_mw": 20523,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T10:00:00+09:00",
+      "demand_mw": 20263,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T11:00:00+09:00",
+      "demand_mw": 19406,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T12:00:00+09:00",
+      "demand_mw": 18205,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T13:00:00+09:00",
+      "demand_mw": 17711,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T14:00:00+09:00",
+      "demand_mw": 17783,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T15:00:00+09:00",
+      "demand_mw": 17673,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T16:00:00+09:00",
+      "demand_mw": 18121,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T17:00:00+09:00",
+      "demand_mw": 18770,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T18:00:00+09:00",
+      "demand_mw": 19162,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T19:00:00+09:00",
+      "demand_mw": 18684,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T20:00:00+09:00",
+      "demand_mw": 18347,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T21:00:00+09:00",
+      "demand_mw": 17860,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T22:00:00+09:00",
+      "demand_mw": 16955,
+      "forecast_mw": null
+    },
+    {
+      "ts": "2025-12-19T23:00:00+09:00",
+      "demand_mw": 15923,
+      "forecast_mw": null
+    }
+  ],
+  "source": {
+    "name": "OCCTO",
+    "url": "https://www.occto.or.jp/"
+  }
+}
